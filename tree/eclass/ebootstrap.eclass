@@ -9,11 +9,21 @@
 # This eclass overrides the ebuild phases to bootstrap a gentoo
 # installation.
 
+# Environment variables used in processing the configuration:
+#
+# TIMEZONE    - used to set the /etc/timezone
+#               eg TIMEZONE="Australia/Brisbane"
+#
+# LOCALE_GEN  - used to set /etc/locale.gen; a space separated list
+#               of locales to append to the file
+#               eg LOCALE_GEN="en_AU.UTF-8 en_AU.ISO-8859-1"
+#               (note the use of the '.' in each locale)
+
 if [[ ! ${_EBOOTSTRAP} ]]; then
 
 S=${TARGET}
 
-EXPORT_FUNCTIONS pkg_info src_unpack pkg_preinst
+EXPORT_FUNCTIONS pkg_info src_unpack src_configure pkg_preinst
 
 unpack() {
   echo ${PWD}
@@ -61,7 +71,29 @@ ebootstrap_src_unpack_alt() {
 				;;
 		esac
 	done
+}
 
+ebootstrap_src_configure() {
+	# configure stuff in /etc/portage
+	# - make.conf
+	# - make.profile
+
+	# timezone
+	if [[ -n "${TIMEZONE}" ]]; then
+		echo "Setting timezone to ${TIMEZONE}"
+		echo "${TIMEZONE}" > ${S}/etc/timezone
+		if [[ -e ${S}/usr/share/zoneinfo/${TIMEZONE} ]]; then
+			cp ${S}/usr/share/zoneinfo/${TIMEZONE} ${S}/etc/localtime
+		fi
+	fi
+
+	# /etc/locale.gen
+	if [[ -n "${LOCALE_GEN}" ]]; then
+		echo "Configuring /etc/locale.gen"
+		# strip any inital commented locales
+		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
+		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
+	fi
 }
 
 ebootstrap_pkg_info() {
