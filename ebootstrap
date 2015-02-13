@@ -1,0 +1,112 @@
+#!/bin/bash
+# Copyright (c) 2015 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# Author: Bruce Schultz <brulzki@gmail.com>
+
+# Usage:
+# ebootstrap CONFIG TARGET
+
+source /lib/rc/sh/functions.sh
+
+__cfgr=$(readlink -m ${0%/*})
+
+# override the portage settings
+export PORTAGE_CONFIGROOT=${__cfgr}
+export PORTDIR=${__cfgr}/tree
+export PORTAGE_REPOSITORIES="[ebootstrap]
+location = ${PORTDIR}
+sync-type =
+sync-uri ="
+
+usage() {
+  n=${0##*/}
+  cat <<EOF
+Usage: ${n} [action] CONFIG TARGET
+
+Actions: [ --info | --install | --clean | --config ]
+EOF
+
+[[ $1 == "--long" ]] && cat <<EOF
+  --install (the default)
+      Install the system defined in CONFIG to the TARGET directory
+
+  --info
+      Show the output from pkg_info()
+
+  --clean
+      Clean the ebuild temporary files
+
+  --config
+      Configure the system installed at TARGET
+      This is the action defined in the pkg_config() section fo the ebuild
+EOF
+}
+
+die() {
+  [ ${#} -eq 0 ] || eerror "${*}"
+  exit 2
+}
+
+case ${1} in
+  --info|--fetch|--install|--config|--clean)
+    phase=${1##*-}
+    shift
+    ;;
+  --help)
+    usage --long
+    exit 0
+    ;;
+  --*)
+    phase=${1##*-}
+    ewarn Trying phase $phase
+    shift
+    ;;
+esac
+
+
+if [[ $# -lt 2 ]]; then
+  usage
+  exit -1
+fi
+
+if [[ -f ${1} ]]; then
+  ebuild=$(readlink -m ${1})
+else
+  ebuild=$(equery which ${1} 2>/dev/null)
+fi
+[[ $? == 0 ]] || die "${0##*/}: there are no ebuilds to satisfy \"${1}\""
+
+TARGET=$(readlink -m ${2}) || die "readlink target failed"
+
+if [[ ! -d ${TARGET} ]]; then
+  mkdir -p ${TARGET} || die "Failed to create TARGET ${TARGET}"
+fi
+
+phase=${phase:-install}
+
+case $phase in
+  info)
+    ;;
+  clean)
+    einfo "Cleaning"
+    ;;
+  install)
+    einfo "Installing into $TARGET"
+    ;;
+  config)
+    einfo "Configuring: $TARGET"
+    ;;
+  fetch|unpack|prepare|configure|compile|test)
+    ewarn "Running ebuild phase $phase"
+    ;;
+  *)
+    ewarn "Trying unknown ebuild phase: $phase"
+    ;;
+esac
+
+export TARGET
+ebuild $ebuild $phase
+if [[ $? -eq 0 && "${phase}" != "clean" ]]; then
+  ebuild $ebuild clean
+fi
