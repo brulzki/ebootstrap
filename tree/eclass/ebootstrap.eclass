@@ -3,7 +3,7 @@
 
 # @ECLASS: ebootstrap
 # @AUTHOR:
-# Bruce Schultz <brulzki@gmeil.com>
+# Bruce Schultz <brulzki@gmail.com>
 # @BLURB: A eclass for bootstrapping a system using portage.
 # @DESCRIPTION:
 # This eclass overrides the ebuild phases to bootstrap a gentoo
