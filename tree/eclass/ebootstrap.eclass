@@ -13,7 +13,7 @@ if [[ ! ${_EBOOTSTRAP} ]]; then
 
 S=${TARGET}
 
-EXPORT_FUNCTIONS pkg_info src_unpack
+EXPORT_FUNCTIONS pkg_info src_unpack pkg_preinst
 
 unpack() {
   echo ${PWD}
@@ -69,6 +69,10 @@ ebootstrap_pkg_info() {
 	echo "WORKDIR=${WORKDIR}"
 	echo "S=${S}"
 	echo "ARCH=${ARCH}"
+}
+
+ebootstrap_pkg_preinst() {
+	die "ebootstrap ebuilds can not be merged into a system"
 }
 
 # trace phase functions which have not been implemented
