@@ -21,10 +21,15 @@ unpack() {
 }
 
 ebootstrap_src_unpack() {
-	#[[ -n ${A} ]] && unpack ${A}
-        cd ${TARGET}
-	#default_src_unpack
-	unpack ${A}
+	debug-print-function ${FUNCNAME} "${@}"
+
+	[[ ! -d ${TARGET} ]] || die "TARGET rootfs directory already exists"
+	mkdir -p ${TARGET}
+	# don't use unpack; the handbook requires using the tar -p option
+	echo ">>> Unpacking ${A} into ${TARGET}"
+	tar -xopf ${DISTDIR}/${A} -C ${TARGET} || die "Failed extracting ${A}"
+
+	# unpack a portage snapshot
 }
 
 ebootstrap_src_unpack_alt() {

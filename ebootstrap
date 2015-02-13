@@ -79,10 +79,6 @@ fi
 
 TARGET=$(readlink -m ${2}) || die "readlink target failed"
 
-if [[ ! -d ${TARGET} ]]; then
-  mkdir -p ${TARGET} || die "Failed to create TARGET ${TARGET}"
-fi
-
 phase=${phase:-install}
 
 case $phase in
