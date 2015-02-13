@@ -72,7 +72,7 @@ ebootstrap_pkg_info() {
 }
 
 # trace phase functions which have not been implemented
-for _f in src_unpack src_prepare \
+for _f in src_unpack  \
 	  src_configure src_compile src_test src_install \
 	  pkg_preinst pkg_postinst pkg_prerm pkg_postrm pkg_config; do
 	# only override if the function is not already defined
