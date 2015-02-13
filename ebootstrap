@@ -107,6 +107,7 @@ esac
 
 export TARGET
 ebuild $ebuild $phase
-if [[ $? -eq 0 && "${phase}" != "clean" ]]; then
-  ebuild $ebuild clean
+if [[ $? -eq 0 && "${phase}" == "install" ]]; then
+    einfo "Cleaning"
+    ebuild $ebuild clean
 fi
