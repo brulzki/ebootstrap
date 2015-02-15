@@ -11,6 +11,9 @@
 
 # Environment variables used in processing the configuration:
 #
+# E_PROFILE   - used to set the symlink for /etc/portage/make.profile
+#               eg E_PROFILE=gentoo:default/linux/x86/13.0
+#
 # TIMEZONE    - used to set the /etc/timezone
 #               eg TIMEZONE="Australia/Brisbane"
 #
@@ -24,6 +27,9 @@ if [[ ! ${_EBOOTSTRAP} ]]; then
 S=${TARGET}
 
 EXPORT_FUNCTIONS pkg_info src_unpack src_configure pkg_preinst
+
+#DEFAULT_REPO=${DEFAULT_REPO:-gentoo}
+: ${DEFAULT_REPO:=gentoo}
 
 unpack() {
   echo ${PWD}
@@ -73,10 +79,89 @@ ebootstrap_src_unpack_alt() {
 	done
 }
 
+
+# relative_name taken from /usr/share/eselect/libs/path-manipulation.bash
+# license: GPL2 or later
+
+# Wrapper function for either GNU "readlink -f" or "realpath".
+canonicalise() {
+	/usr/bin/readlink -f "$@"
+}
+
+# relative_name
+# Convert filename $1 to be relative to directory $2.
+# For both paths, all but the last component must exist.
+
+relative_name() {
+	# this function relies on extglob
+	shopt -q extglob || local reset_extglob=1
+	shopt -s extglob
+
+	#local path=$(canonicalise "$1") dir=$(canonicalise "$2") c
+	local path="$1" dir="$2" c
+
+	while [[ -n ${dir} ]]; do
+		c=${dir%%/*}
+		dir=${dir##"${c}"*(/)}
+		if [[ ${path%%/*} = "${c}" ]]; then
+			path=${path##"${c}"*(/)}
+		else
+			path=..${path:+/}${path}
+		fi
+	done
+	echo "${path:-.}"
+	[[ ${reset_extglob} -eq 1 ]] && shopt -u extglob
+}
+
+
+get_repo_path() {
+	local repo=$1 path
+
+	# override the PORTAGE_CONFIGROOT to get the path relative to TARGET
+	# this doesn't work when run inside of portage
+	path=$(env PORTAGE_CONFIGROOT=${TARGET} portageq get_repo_path / ${repo})
+
+	# fix the path in the case that nothing was found
+	[[ -z "${path}" ]] && path="/usr/portage"
+
+	echo "${path}"
+}
+
+# set_profile() is adapted from profile.eselect
+# license: GPL2 or later
+set_profile() {
+	local target=$1
+	local repo
+
+	repo=${target%%:*}
+	[[ ${repo} == "${target}" || -z ${repo} ]] && repo=${DEFAULT_REPO}
+	target=${target#*:}
+	repopath=$(get_repo_path "${repo}") || die -q "get_repo_path failed"
+
+	[[ -z ${target} || -z ${repopath} ]] \
+		&& die -q "Target \"$1\" doesn't appear to be valid!"
+	# don't assume that the path exists
+	#[[ ! -d ${repopath}/profiles/${target} ]] \
+	#	&& die -q "No profile directory for target \"${target}\""
+
+	# set relative symlink
+	ln -snf "$(relative_name "${repopath}" /etc/portage)/profiles/${target}" \
+		${TARGET}/etc/portage/make.profile \
+		|| die -q "Couldn't set new ${MAKE_PROFILE} symlink"
+
+	return 0
+}
+
 ebootstrap_src_configure() {
 	# configure stuff in /etc/portage
 	# - make.conf
 	# - make.profile
+
+	# make.profile
+	if [[ -n "${E_PROFILE}" ]]; then
+		echo "Setting make.profile to ${E_PROFILE}"
+		set_profile "${E_PROFILE}"
+	fi
 
 	# timezone
 	if [[ -n "${TIMEZONE}" ]]; then
