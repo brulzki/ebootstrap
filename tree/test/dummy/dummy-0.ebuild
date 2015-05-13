@@ -15,3 +15,7 @@ KEYWORDS="ebootstrap"
 #DEPEND=""
 #RDEPEND=""
 
+E_PROFILE=dummy
+E_PORTDIR=/var/db/portage/gentoo
+E_DISTDIR=/var/cache/distfiles
+E_PKGDIR=/var/cache/packages

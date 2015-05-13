@@ -9,10 +9,15 @@
 # This eclass overrides the ebuild phases to bootstrap a gentoo
 # installation.
 
-# Environment variables used in processing the configuration:
+# Environment variables used in processing the TARGET configuration:
 #
 # E_PROFILE   - used to set the symlink for /etc/portage/make.profile
 #               eg E_PROFILE=gentoo:default/linux/x86/13.0
+#
+# E_PORTDIR   .
+# E_DISTDIR   .
+# E_PKGDIR    .
+#             - these are used to configure /etc/portage/make.conf
 #
 # TIMEZONE    - used to set the /etc/timezone
 #               eg TIMEZONE="Australia/Brisbane"
@@ -161,6 +166,37 @@ ebootstrap_src_configure() {
 	if [[ -n "${E_PROFILE}" ]]; then
 		echo "Setting make.profile to ${E_PROFILE}"
 		set_profile "${E_PROFILE}"
+	fi
+
+	# make.conf
+	if [[ -n "${E_PORTDIR}" ]]; then
+		echo "Setting make.conf PORTDIR to ${E_PORTDIR}"
+		if grep -q "^PORTDIR=" ${S}/etc/portage/make.conf; then
+			sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${S}/etc/portage/make.conf
+		else
+			echo "PORTDIR=${E_PORTDIR}" >> ${S}/etc/portage/make.conf
+		fi
+		mkdir -p ${S}${E_PORTDIR}
+	fi
+
+	if [[ -n "${E_DISTDIR}" ]]; then
+		echo "Setting make.conf DISTDIR to ${E_DISTDIR}"
+		if grep -q "^DISTDIR=" ${S}/etc/portage/make.conf; then
+			sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${S}/etc/portage/make.conf
+		else
+			echo "DISTDIR=${E_DISTDIR}" >> ${S}/etc/portage/make.conf
+		fi
+		mkdir -p ${S}${E_DISTDIR}
+	fi
+
+	if [[ -n "${E_PKGDIR}" ]]; then
+		echo "Setting make.conf PKGDIR to ${E_PKGDIR}"
+		if grep -q "^PKGDIR=" ${S}/etc/portage/make.conf; then
+			sed -i "s!^PKGDIR=.*!PKGDIR=\"${E_PKGDIR}\"!" ${S}/etc/portage/make.conf
+		else
+			echo "PKGDIR=${E_PKGDIR}" >> ${S}/etc/portage/make.conf
+		fi
+		mkdir -p ${S}${E_PKGDIR}
 	fi
 
 	# timezone
