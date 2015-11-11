@@ -19,6 +19,8 @@ for _f in pkg_pretend pkg_nofetch pkg_setup src_unpack src_prepare \
 		einfo \"PWD=\${PWD}\"
 		einfo \"S=\${S}\"
 		einfo \"A=\${A}\"
+		einfo \"ROOT=\${ROOT}\"
+		einfo \"EROOT=\${EROOT}\"
 		[[ \${FUNCNAME} == dummy_src_unpack ]] && mkdir -p \${S};
 	}"
 	EXPORT_FUNCTIONS ${_f}

@@ -116,6 +116,10 @@ case $phase in
 esac
 
 export TARGET
+# set the ROOT so we can use EROOT in place of TARGET in the ebuilds
+# but this currently prints a warning about not finding the system profile
+# even though we override the profile in PORTAGE_CONFIGROOT ???
+export ROOT=${TARGET}
 
 mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
 ebuild $ebuild $phase
