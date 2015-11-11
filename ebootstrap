@@ -17,11 +17,12 @@ export PORTDIR=${__cfgr}/tree
 export PORTAGE_REPOSITORIES="[ebootstrap]
 location = ${PORTDIR}
 sync-type =
-sync-uri ="
+sync-uri =
+"
 
 usage() {
-  n=${0##*/}
-  cat <<EOF
+    n=${0##*/}
+    cat <<EOF
 Usage: ${n} [action] CONFIG TARGET
 
 Actions: [ --info | --install | --clean | --config ]
@@ -40,40 +41,43 @@ EOF
   --config
       Configure the system installed at TARGET
       This is the action defined in the pkg_config() section fo the ebuild
+
+PORTAGE_CONFIGROOT=${PORTAGE_CONFIGROOT}
 EOF
 }
 
 die() {
-  [ ${#} -eq 0 ] || eerror "${*}"
-  exit 2
+    [ ${#} -eq 0 ] || eerror "${*}"
+    exit 2
 }
 
 case ${1} in
-  --info|--fetch|--install|--config|--clean)
-    phase=${1##*-}
-    shift
-    ;;
-  --help)
-    usage --long
-    exit 0
-    ;;
-  --*)
-    phase=${1##*-}
-    ewarn Trying phase $phase
-    shift
-    ;;
+    --info|--fetch|--install|--config|--clean)
+        phase=${1##*-}
+        shift
+        ;;
+    --help)
+        usage --long
+        exit 0
+        ;;
+    --*)
+        phase=${1##*-}
+        ewarn Trying phase $phase
+        shift
+        ;;
 esac
 
 
 if [[ $# -lt 2 ]]; then
-  usage
-  exit -1
+    usage
+    exit -1
 fi
 
 if [[ -f ${1} ]]; then
-  ebuild=$(readlink -m ${1})
+    ebuild=$(readlink -m ${1})
 else
-  ebuild=$(equery which ${1} 2>/dev/null)
+    # equery means gentoolkit must be installed
+    ebuild=$(equery which ${1} 2>/dev/null)
 fi
 [[ $? == 0 ]] || die "${0##*/}: there are no ebuilds to satisfy \"${1}\""
 
@@ -82,23 +86,23 @@ TARGET=$(readlink -m ${2}) || die "readlink target failed"
 phase=${phase:-install}
 
 case $phase in
-  info)
-    ;;
-  clean)
-    einfo "Cleaning"
-    ;;
-  install)
-    einfo "Installing into $TARGET"
-    ;;
-  config)
-    einfo "Configuring: $TARGET"
-    ;;
-  fetch|unpack|prepare|configure|compile|test)
-    ewarn "Running ebuild phase $phase"
-    ;;
-  *)
-    ewarn "Trying unknown ebuild phase: $phase"
-    ;;
+    info)
+        ;;
+    clean)
+        einfo "Cleaning"
+        ;;
+    install)
+        einfo "Installing into $TARGET"
+        ;;
+    config)
+        einfo "Configuring: $TARGET"
+        ;;
+    fetch|unpack|prepare|configure|compile|test)
+        ewarn "Running ebuild phase $phase"
+        ;;
+    *)
+        ewarn "Trying unknown ebuild phase: $phase"
+        ;;
 esac
 
 export TARGET
