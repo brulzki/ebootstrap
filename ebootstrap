@@ -20,6 +20,16 @@ sync-type =
 sync-uri =
 "
 
+if [[ ${UID} == 0 ]]; then
+    : ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap}
+else
+    # this enables running portage as non-root, but it spits out
+    # lots of chgrp: operation not permitted errors which I can't
+    # get rid of :(
+    : ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap-${UID}}
+fi
+export PORTAGE_TMPDIR
+
 usage() {
     n=${0##*/}
     cat <<EOF
@@ -106,6 +116,8 @@ case $phase in
 esac
 
 export TARGET
+
+mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
 ebuild $ebuild $phase
 if [[ $? -eq 0 && "${phase}" == "install" ]]; then
     einfo "Cleaning"
