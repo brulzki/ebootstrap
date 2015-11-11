@@ -29,7 +29,12 @@
 
 if [[ ! ${_EBOOTSTRAP} ]]; then
 
-S=${TARGET}
+# this results in very ungraceful errors, but prevents any major stuff-ups
+if [[ "${EBUILD_PHASE}" != "info" ]]; then
+	[[ ${EROOT} == "/" ]] && die "refusing to ebootstrap /"
+fi
+
+S=${EROOT}
 
 EXPORT_FUNCTIONS pkg_info src_unpack src_configure pkg_preinst
 
@@ -44,11 +49,15 @@ unpack() {
 ebootstrap_src_unpack() {
 	debug-print-function ${FUNCNAME} "${@}"
 
-	[[ ! -d ${TARGET} ]] || die "TARGET rootfs directory already exists"
-	mkdir -p ${TARGET}
+	[[ ${EROOT} == "/" ]] && die "ERROR: refusing to install into /"
+
+	mkdir -p ${EROOT}
+	# test that the target directory is empty
+	[[ "$(ls -A ${EROOT})" ]] && die "TARGET rootfs directory already exists"
+
 	# don't use unpack; the handbook requires using the tar -p option
-	echo ">>> Unpacking ${A} into ${TARGET}"
-	tar -xopf ${DISTDIR}/${A} -C ${TARGET} || die "Failed extracting ${A}"
+	echo ">>> Unpacking ${A} into ${EROOT}"
+	tar -xopf ${DISTDIR}/${A} -C ${EROOT} || die "Failed extracting ${A}"
 
 	# unpack a portage snapshot
 }
@@ -218,7 +227,7 @@ ebootstrap_src_configure() {
 }
 
 ebootstrap_pkg_info() {
-	echo "TARGET=${TARGET}"
+	echo EROOT=${EROOT}
 	echo "WORKDIR=${WORKDIR}"
 	echo "S=${S}"
 	echo "ARCH=${ARCH}"
