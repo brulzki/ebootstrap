@@ -63,6 +63,55 @@ die() {
 	exit 2
 }
 
+if [[ "${EBOOTSTRAP_BACKEND}" == "ebuild" ]]; then
+
+	ebootstrap-ebuild () {
+		ebuild "${@}"
+	}
+
+else
+	source ${EBOOTSTRAP_LIB}/ebootstrap.sh
+
+	inherit() {
+		:
+	}
+
+	debug-print-function() {
+		# adapted from portage ebuild.sh
+		echo "${1}: entering function, parameters ${*:2}"
+	}
+
+	ebootstrap-ebuild () {
+		local ebuild=$1 phase=$2
+
+		# this is probably dangerous
+		source ${PORTAGE_CONFIGROOT}/etc/portage/make.conf
+		source ${ebuild}
+		export A=${SRC_URI##*/}
+		export EROOT=${ROOT}
+		case $phase in
+			info)
+				echo "Info"
+				;;
+			install)
+				echo "Unpacking ${DISTDIR}/${A}"
+				ebootstrap-unpack ${DISTDIR}/${A}
+				;& # fall through to configure
+			config)
+				echo "Configuring"
+				ebootstrap-configure
+				;;
+			fetch)
+				echo "Fetching"
+				;;
+			clean)
+				echo "Cleaning"
+				;;
+
+		esac
+	}
+fi
+
 case ${1} in
 	--info|--fetch|--install|--config|--clean)
 		phase=${1##*-}
@@ -124,8 +173,8 @@ export TARGET
 export ROOT=${TARGET}
 
 mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
-ebuild $ebuild $phase
+ebootstrap-ebuild $ebuild $phase
 if [[ $? -eq 0 && "${phase}" == "install" ]]; then
 	einfo "Cleaning"
-	ebuild $ebuild clean
+	ebootstrap-ebuild $ebuild clean
 fi
