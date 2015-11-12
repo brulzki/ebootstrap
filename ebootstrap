@@ -11,6 +11,8 @@ source /lib/rc/sh/functions.sh
 
 __cfgr=$(readlink -m ${0%/*})
 
+export EBOOTSTRAP_LIB=${__cfgr}/lib
+
 # override the portage settings
 export PORTAGE_CONFIGROOT=${__cfgr}
 export PORTDIR=${__cfgr}/tree
