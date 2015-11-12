@@ -21,18 +21,18 @@ sync-uri =
 "
 
 if [[ ${UID} == 0 ]]; then
-    : ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap}
+	: ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap}
 else
-    # this enables running portage as non-root, but it spits out
-    # lots of chgrp: operation not permitted errors which I can't
-    # get rid of :(
-    : ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap-${UID}}
+	# this enables running portage as non-root, but it spits out
+	# lots of chgrp: operation not permitted errors which I can't
+	# get rid of :(
+	: ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap-${UID}}
 fi
 export PORTAGE_TMPDIR
 
 usage() {
-    n=${0##*/}
-    cat <<EOF
+	n=${0##*/}
+	cat <<EOF
 Usage: ${n} [action] CONFIG TARGET
 
 Actions: [ --info | --install | --clean | --config ]
@@ -40,54 +40,54 @@ EOF
 
 [[ $1 == "--long" ]] && cat <<EOF
   --install (the default)
-      Install the system defined in CONFIG to the TARGET directory
+	  Install the system defined in CONFIG to the TARGET directory
 
   --info
-      Show the output from pkg_info()
+	  Show the output from pkg_info()
 
   --clean
-      Clean the ebuild temporary files
+	  Clean the ebuild temporary files
 
   --config
-      Configure the system installed at TARGET
-      This is the action defined in the pkg_config() section fo the ebuild
+	  Configure the system installed at TARGET
+	  This is the action defined in the pkg_config() section fo the ebuild
 
 PORTAGE_CONFIGROOT=${PORTAGE_CONFIGROOT}
 EOF
 }
 
 die() {
-    [ ${#} -eq 0 ] || eerror "${*}"
-    exit 2
+	[ ${#} -eq 0 ] || eerror "${*}"
+	exit 2
 }
 
 case ${1} in
-    --info|--fetch|--install|--config|--clean)
-        phase=${1##*-}
-        shift
-        ;;
-    --help)
-        usage --long
-        exit 0
-        ;;
-    --*)
-        phase=${1##*-}
-        ewarn Trying phase $phase
-        shift
-        ;;
+	--info|--fetch|--install|--config|--clean)
+		phase=${1##*-}
+		shift
+		;;
+	--help)
+		usage --long
+		exit 0
+		;;
+	--*)
+		phase=${1##*-}
+		ewarn Trying phase $phase
+		shift
+		;;
 esac
 
 
 if [[ $# -lt 2 ]]; then
-    usage
-    exit -1
+	usage
+	exit -1
 fi
 
 if [[ -f ${1} ]]; then
-    ebuild=$(readlink -m ${1})
+	ebuild=$(readlink -m ${1})
 else
-    # equery means gentoolkit must be installed
-    ebuild=$(equery which ${1} 2>/dev/null)
+	# equery means gentoolkit must be installed
+	ebuild=$(equery which ${1} 2>/dev/null)
 fi
 [[ $? == 0 ]] || die "${0##*/}: there are no ebuilds to satisfy \"${1}\""
 
@@ -96,23 +96,23 @@ TARGET=$(readlink -m ${2}) || die "readlink target failed"
 phase=${phase:-install}
 
 case $phase in
-    info)
-        ;;
-    clean)
-        einfo "Cleaning"
-        ;;
-    install)
-        einfo "Installing into $TARGET"
-        ;;
-    config)
-        einfo "Configuring: $TARGET"
-        ;;
-    fetch|unpack|prepare|configure|compile|test)
-        ewarn "Running ebuild phase $phase"
-        ;;
-    *)
-        ewarn "Trying unknown ebuild phase: $phase"
-        ;;
+	info)
+		;;
+	clean)
+		einfo "Cleaning"
+		;;
+	install)
+		einfo "Installing into $TARGET"
+		;;
+	config)
+		einfo "Configuring: $TARGET"
+		;;
+	fetch|unpack|prepare|configure|compile|test)
+		ewarn "Running ebuild phase $phase"
+		;;
+	*)
+		ewarn "Trying unknown ebuild phase: $phase"
+		;;
 esac
 
 export TARGET
@@ -124,6 +124,6 @@ export ROOT=${TARGET}
 mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
 ebuild $ebuild $phase
 if [[ $? -eq 0 && "${phase}" == "install" ]]; then
-    einfo "Cleaning"
-    ebuild $ebuild clean
+	einfo "Cleaning"
+	ebuild $ebuild clean
 fi
