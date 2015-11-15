@@ -165,6 +165,23 @@ ebootstrap-configure() {
 	# - make.conf
 	# - make.profile
 
+	# timezone
+	if [[ -n "${TIMEZONE}" ]]; then
+		echo "Setting timezone to ${TIMEZONE}"
+		echo "${TIMEZONE}" > ${S}/etc/timezone
+		if [[ -e ${S}/usr/share/zoneinfo/${TIMEZONE} ]]; then
+			cp ${S}/usr/share/zoneinfo/${TIMEZONE} ${S}/etc/localtime
+		fi
+	fi
+
+	# /etc/locale.gen
+	if [[ -n "${LOCALE_GEN}" ]]; then
+		echo "Configuring /etc/locale.gen"
+		# strip any inital commented locales
+		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
+		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
+	fi
+
 	# make.profile
 	if [[ -n "${E_PROFILE}" ]]; then
 		echo "Setting make.profile to ${E_PROFILE}"
@@ -201,25 +218,6 @@ ebootstrap-configure() {
 		fi
 		mkdir -p ${S}${E_PKGDIR}
 	fi
-
-	# timezone
-	if [[ -n "${TIMEZONE}" ]]; then
-		echo "Setting timezone to ${TIMEZONE}"
-		echo "${TIMEZONE}" > ${S}/etc/timezone
-		if [[ -e ${S}/usr/share/zoneinfo/${TIMEZONE} ]]; then
-			cp ${S}/usr/share/zoneinfo/${TIMEZONE} ${S}/etc/localtime
-		fi
-	fi
-
-	# /etc/locale.gen
-	if [[ -n "${LOCALE_GEN}" ]]; then
-		echo "Configuring /etc/locale.gen"
-		# strip any inital commented locales
-		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
-		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
-	fi
-
-
 }
 
 _EBOOTSTRAP_FUNCTIONS=1
