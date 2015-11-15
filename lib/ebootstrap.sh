@@ -160,6 +160,68 @@ set_profile() {
 	return 0
 }
 
+get-repo-config() {
+	local name=$1 uri=$2
+
+	case "${uri}" in
+		rsync://* | ssh://*)
+			sync_type="rsync"
+			;;
+		git://* | git+ssh://* | http://*.git | https://*.git)
+			sync_type="git"
+			;;
+		cvs://:*:* | :*:*)
+			sync_type="cvs"
+			;;
+		*)
+			sync_type=""
+			;;
+	esac
+
+	for opt in ${*:3}; do
+		case "${opt}" in
+			default)
+				echo "[DEFAULT]"
+				echo "main-repo = ${name}"
+				echo
+				;;
+			sync-type=*)
+				sync_type="${opt#*=}"
+				;;
+			*)
+				;;
+		esac
+	done
+
+	echo "[${name}]"
+	echo "location = ${REPOPATH}/${name}"
+	echo "sync-uri = ${uri}"
+	echo "sync-type = ${sync_type}"
+
+	for opt in ${*:3}; do
+		[[ "${opt}" =~ ^sync-type= ]] && continue
+		[[ "${opt}" =~ .+=.* ]] && echo "${opt/=/ = }"
+	done
+}
+
+set-repos-conf() {
+	# repos is a multiline variable
+	local repos="${1}"
+	local repod="${EROOT}/etc/portage/repos.conf"
+
+	[[ -f ${repod} ]] && mv ${repod} ${repod}-bak
+	mkdir -p ${repod}
+
+	echo "${repos}" | while read -a repo; do
+		# skip blank lines and comments
+		[[ -n "${repo}" ]] || continue
+		[[ "${repo}" =~ ^# ]] && continue
+
+		echo " - /etc/portage/repos.conf/${repo}.conf"
+		get-repo-config "${repo[@]}" > ${repod}/${repo}.conf
+	done
+}
+
 ebootstrap-configure() {
 	# configure stuff in /etc/portage
 	# - make.conf
@@ -180,6 +242,12 @@ ebootstrap-configure() {
 		# strip any inital commented locales
 		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
 		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
+	fi
+
+	# repos.conf
+	if [[ -n "${E_REPOS}" ]]; then
+		echo "Configuring /etc/portage/repos.conf"
+		set-repos-conf "${E_REPOS}"
 	fi
 
 	# make.profile
