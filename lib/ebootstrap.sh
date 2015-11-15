@@ -66,7 +66,7 @@ ebootstrap-unpack-alt() {
 	do
 		case "${f}" in
 			*.tar|*.tar.gz|*.tar.bz2|*.tar.xz)
-				local destdir=${TARGET}
+				local destdir=${EROOT}
 
 				debug-print "${FUNCNAME}: unpacking ${f} to ${destdir}"
 
@@ -80,7 +80,7 @@ ebootstrap-unpack-alt() {
 				debug-print "${FUNCNAME}: falling back to unpack for ${f}"
 
 				# fall back to the default method
-				cd $TARGET
+				cd ${EROOT}
 				unpack "${f}"
 				;;
 		esac
@@ -125,9 +125,9 @@ relative_name() {
 get_repo_path() {
 	local repo="$1" path
 
-	# override the PORTAGE_CONFIGROOT to get the path relative to TARGET
+	# override the PORTAGE_CONFIGROOT to get the path relative to EROOT target
 	# this doesn't work when run inside of portage
-	path=$(env PORTAGE_CONFIGROOT=${TARGET} portageq get_repo_path / ${repo})
+	path=$(env PORTAGE_CONFIGROOT=${EROOT} portageq get_repo_path / ${repo})
 
 	# fix the path in the case that nothing was found
 	[[ -z "${path}" ]] && path="/usr/portage"
@@ -154,7 +154,7 @@ set_profile() {
 
 	# set relative symlink
 	ln -snf "$(relative_name "${repopath}" /etc/portage)/profiles/${target}" \
-		${TARGET}/etc/portage/make.profile \
+		${EROOT}/etc/portage/make.profile \
 		|| die -q "Couldn't set new ${MAKE_PROFILE} symlink"
 
 	return 0
@@ -218,6 +218,8 @@ ebootstrap-configure() {
 		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
 		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
 	fi
+
+
 }
 
 _EBOOTSTRAP_FUNCTIONS=1
