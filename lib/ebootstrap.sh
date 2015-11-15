@@ -15,14 +15,6 @@
 #
 # EROOT       - the path to the live target filesystem
 #
-# E_PROFILE   - used to set the symlink for /etc/portage/make.profile
-#               eg E_PROFILE=gentoo:default/linux/x86/13.0
-#
-# E_PORTDIR   .
-# E_DISTDIR   .
-# E_PKGDIR    .
-#             - these are used to configure /etc/portage/make.conf
-#
 # TIMEZONE    - used to set the /etc/timezone
 #               eg TIMEZONE="Australia/Brisbane"
 #
@@ -30,6 +22,22 @@
 #               of locales to append to the file
 #               eg LOCALE_GEN="en_AU.UTF-8 en_AU.ISO-8859-1"
 #               (note the use of the '.' in each locale)
+#
+# REPOPATH    - the path where the overlay repositories are created
+#               eg REPOPATH=/var/lib/portage/repos
+#
+# E_REPOS     - used to configure the files in /etc/portage/repos.conf/
+#               this is a multiline variable of "name uri [options]"
+#               eg E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default
+#                           overlay http://example.com/overlay.git auto-sync=no"
+#
+# E_PROFILE   - used to set the symlink for /etc/portage/make.profile
+#               eg E_PROFILE=gentoo:default/linux/x86/13.0
+#
+# E_PORTDIR   .
+# E_DISTDIR   .
+# E_PKGDIR    .
+#             - these are used to configure /etc/portage/make.conf
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
