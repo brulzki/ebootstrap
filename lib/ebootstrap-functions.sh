@@ -238,9 +238,9 @@ ebootstrap-configure() {
 	# timezone
 	if [[ -n "${TIMEZONE}" ]]; then
 		echo "Setting timezone to ${TIMEZONE}"
-		echo "${TIMEZONE}" > ${S}/etc/timezone
-		if [[ -e ${S}/usr/share/zoneinfo/${TIMEZONE} ]]; then
-			cp ${S}/usr/share/zoneinfo/${TIMEZONE} ${S}/etc/localtime
+		echo "${TIMEZONE}" > ${EROOT}/etc/timezone
+		if [[ -e ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ]]; then
+			cp ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ${EROOT}/etc/localtime
 		fi
 	fi
 
@@ -248,8 +248,8 @@ ebootstrap-configure() {
 	if [[ -n "${LOCALE_GEN}" ]]; then
 		echo "Configuring /etc/locale.gen"
 		# strip any inital commented locales
-		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${S}/etc/locale.gen
-		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${S}/etc/locale.gen
+		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen
+		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/locale.gen
 	fi
 
 	# repos.conf
@@ -268,21 +268,21 @@ ebootstrap-configure() {
 	if [[ -n "${E_PORTDIR}" ]]; then
 		echo "Setting make.conf PORTDIR to ${E_PORTDIR}"
 		if grep -q "^PORTDIR=" ${S}/etc/portage/make.conf; then
-			sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${S}/etc/portage/make.conf
+			sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${EROOT}/etc/portage/make.conf
 		else
 			echo "PORTDIR=${E_PORTDIR}" >> ${S}/etc/portage/make.conf
 		fi
-		mkdir -p ${S}${E_PORTDIR}
+		mkdir -p ${EROOT}${E_PORTDIR}
 	fi
 
 	if [[ -n "${E_DISTDIR}" ]]; then
 		echo "Setting make.conf DISTDIR to ${E_DISTDIR}"
 		if grep -q "^DISTDIR=" ${S}/etc/portage/make.conf; then
-			sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${S}/etc/portage/make.conf
+			sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${EROOT}/etc/portage/make.conf
 		else
 			echo "DISTDIR=${E_DISTDIR}" >> ${S}/etc/portage/make.conf
 		fi
-		mkdir -p ${S}${E_DISTDIR}
+		mkdir -p ${EROOT}${E_DISTDIR}
 	fi
 
 	if [[ -n "${E_PKGDIR}" ]]; then
@@ -292,7 +292,7 @@ ebootstrap-configure() {
 		else
 			echo "PKGDIR=${E_PKGDIR}" >> ${S}/etc/portage/make.conf
 		fi
-		mkdir -p ${S}${E_PKGDIR}
+		mkdir -p ${EROOT}${E_PKGDIR}
 	fi
 }
 
