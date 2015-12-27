@@ -70,7 +70,7 @@ if [[ "${EBOOTSTRAP_BACKEND}" == "ebuild" ]]; then
 	}
 
 else
-	source ${EBOOTSTRAP_LIB}/ebootstrap.sh
+	source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
 
 	inherit() {
 		:

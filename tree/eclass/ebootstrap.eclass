@@ -42,7 +42,7 @@ EXPORT_FUNCTIONS pkg_info src_unpack src_configure pkg_preinst
 : ${DEFAULT_REPO:=gentoo}
 
 # load the ebootstrap library functions
-source ${EBOOTSTRAP_LIB}/ebootstrap.sh
+source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
 
 ebootstrap_src_unpack() {
 	debug-print-function ${FUNCNAME} "${@}"
