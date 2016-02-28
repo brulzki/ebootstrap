@@ -23,7 +23,7 @@
 # E_REPOS     - used to configure the files in /etc/portage/repos.conf/
 #               this is a multiline variable of "name uri [options]"
 #               eg E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default
-#                           overlay http://example.com/overlay.git auto-sync=no"
+#                           overlay http://example.com/overlay.git auto-sync=no priority=0 sync-type="
 #
 # E_PROFILE   - used to set the symlink for /etc/portage/make.profile
 #               eg E_PROFILE=gentoo:default/linux/x86/13.0
