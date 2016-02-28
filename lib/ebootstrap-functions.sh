@@ -15,13 +15,7 @@
 #
 # EROOT       - the path to the live target filesystem
 #
-# TIMEZONE    - used to set the /etc/timezone
-#               eg TIMEZONE="Australia/Brisbane"
-#
-# LOCALE_GEN  - used to set /etc/locale.gen; a space separated list
-#               of locales to append to the file
-#               eg LOCALE_GEN="en_AU.UTF-8 en_AU.ISO-8859-1"
-#               (note the use of the '.' in each locale)
+# Portage configuration:
 #
 # REPOPATH    - the path where the overlay repositories are created
 #               eg REPOPATH=/var/lib/portage/repos
@@ -34,10 +28,29 @@
 # E_PROFILE   - used to set the symlink for /etc/portage/make.profile
 #               eg E_PROFILE=gentoo:default/linux/x86/13.0
 #
+# E_MAKE_CONF - sets the default configuration for /etc/portage/make.conf
+#
 # E_PORTDIR   .
 # E_DISTDIR   .
 # E_PKGDIR    .
-#             - these are used to configure /etc/portage/make.conf
+#             - override the config in /etc/portage/make.conf
+#
+# E_PACKAGE_USE
+# E_PACKAGE_ACCEPT_KEYWORDS
+# E_PACKAGE_MASK
+# E_PACKAGE_LICENSE
+#             - these are used to configure the corresponding
+#               file in /etc/portage/package.*
+#
+# Sytem configuration:
+#
+# TIMEZONE    - used to set the /etc/timezone
+#               eg TIMEZONE="Australia/Brisbane"
+#
+# LOCALE_GEN  - used to set /etc/locale.gen; a space separated list
+#               of locales to append to the file
+#               eg LOCALE_GEN="en_AU.UTF-8 en_AU.ISO-8859-1"
+#               (note the use of the '.' in each locale)
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
@@ -230,11 +243,139 @@ set-repos-conf() {
 	done
 }
 
-ebootstrap-configure() {
-	# configure stuff in /etc/portage
-	# - make.conf
-	# - make.profile
+# This function takes multiline config inputs, generally from environment variables,
+# and clean up the output to be suitable for the portage package.* config files.
+preprocess-config-vars() {
+	local add_blank=0
 
+	# process each of the multiline args
+	while [[ ${#} > 0 ]]; do
+
+		echo "${1}" | while read line; do
+
+			# strip trailing blank lines
+			if [[ -z ${line} ]]; then
+				(( add_blank++ ))
+				continue
+			fi
+			for (( ; add_blank > 0 ; add_blank-- )); do
+				echo
+			done
+
+			echo ${line}
+		done
+		shift
+		add_blank=0
+	done
+}
+
+# This function takes multiline config inputs, generally from environment variables,
+# and clean up the output to be suitable for the portage make.conf file.
+preprocess-make-conf-vars() {
+	# process each of the multiline args
+	preprocess-config-vars "$@" | while read line; do
+
+		# wrap the value in quotes
+		if [[ ${line} =~ ([^=]*)=([^\"].*[^\"]) ]]; then
+			line="${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\""
+		fi
+
+		echo ${line}
+	done
+}
+
+ebootstrap-configure-repos() {
+	if [[ -n "${E_REPOS}" ]]; then
+		echo "Configuring /etc/portage/repos.conf"
+		set-repos-conf "${E_REPOS}"
+	fi
+}
+
+ebootstrap-configure-profile() {
+	if [[ -n "${E_PROFILE}" ]]; then
+		echo "Setting make.profile to ${E_PROFILE}"
+		set_profile "${E_PROFILE}"
+	fi
+}
+
+ebootstrap-configure-make-conf() {
+	local MAKE_CONF=${EROOT}/etc/portage/make.conf
+
+	if [[ -n ${E_MAKE_CONF_HEADER} && ! -e ${MAKE_CONF} ]]; then
+		preprocess-make-conf-vars "${E_MAKE_CONF_HEADER}" > ${MAKE_CONF}
+	fi
+
+	if [[ -n ${E_MAKE_CONF} ]]; then
+		preprocess-make-conf-vars "${E_MAKE_CONF}" >> ${MAKE_CONF}
+	fi
+	#if [[ -n ${E_MAKE_CONF_EXTRA} ]]; then
+	# 	preprocess-make-conf-vars "${E_MAKE_CONF_EXTRA}" >> ${MAKE_CONF}
+	#fi
+
+	if [[ -n ${E_MAKE_CONF_COMPAT} ]]; then
+		preprocess-make-conf-vars "${E_MAKE_CONF_COMPAT}" >> ${MAKE_CONF}
+	fi
+
+	if [[ -n "${E_PORTDIR}" ]]; then
+		echo "Setting make.conf PORTDIR to ${E_PORTDIR}"
+		if grep -q "^PORTDIR=" ${MAKE_CONF}; then
+			sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${MAKE_CONF}
+		else
+			echo "PORTDIR=${E_PORTDIR}" >> ${MAKE_CONF}
+		fi
+		mkdir -p ${EROOT}${E_PORTDIR}
+	fi
+
+	if [[ -n "${E_DISTDIR}" ]]; then
+		echo "Setting make.conf DISTDIR to ${E_DISTDIR}"
+		if grep -q "^DISTDIR=" ${MAKE_CONF}; then
+			sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${MAKE_CONF}
+		else
+			echo "DISTDIR=${E_DISTDIR}" >> ${MAKE_CONF}
+		fi
+		mkdir -p ${EROOT}${E_DISTDIR}
+	fi
+
+	if [[ -n "${E_PKGDIR}" ]]; then
+		echo "Setting make.conf PKGDIR to ${E_PKGDIR}"
+		if grep -q "^PKGDIR=" ${MAKE_CONF}; then
+			sed -i "s!^PKGDIR=.*!PKGDIR=\"${E_PKGDIR}\"!" ${MAKE_CONF}
+		else
+			echo "PKGDIR=${E_PKGDIR}" >> ${MAKE_CONF}
+		fi
+		mkdir -p ${EROOT}${E_PKGDIR}
+	fi
+}
+
+ebootstrap-configure-package-files() {
+	if [[ -n ${E_PACKAGE_ACCEPT_KEYWORDS} ]]; then
+		preprocess-config-vars "${E_PACKAGE_ACCEPT_KEYWORDS}" > ${EROOT}/etc/portage/package.accept_keywords
+	fi
+	if [[ -n ${E_PACKAGE_USE} ]]; then
+		preprocess-config-vars "${E_PACKAGE_USE}" > ${EROOT}/etc/portage/package.use
+	fi
+	if [[ -n ${E_PACKAGE_MASK} ]]; then
+		preprocess-config-vars "${E_PACKAGE_MASK}" > ${EROOT}/etc/portage/package.mask
+	fi
+	if [[ -n ${E_PACKAGE_LICENSE} ]]; then
+		preprocess-config-vars "${E_PACKAGE_LICENSE}" > ${EROOT}/etc/portage/package.license
+	fi
+}
+
+ebootstrap-configure-portage() {
+	# configure stuff in /etc/portage
+	# - repos.conf
+	# - make.profile
+	# - make.conf
+	# - package.*
+
+	ebootstrap-configure-repos
+	ebootstrap-configure-profile
+	ebootstrap-configure-make-conf
+	ebootstrap-configure-package-files
+}
+
+ebootstrap-configure-system() {
 	# timezone
 	if [[ -n "${TIMEZONE}" ]]; then
 		echo "Setting timezone to ${TIMEZONE}"
@@ -251,49 +392,11 @@ ebootstrap-configure() {
 		sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen
 		printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/locale.gen
 	fi
+}
 
-	# repos.conf
-	if [[ -n "${E_REPOS}" ]]; then
-		echo "Configuring /etc/portage/repos.conf"
-		set-repos-conf "${E_REPOS}"
-	fi
-
-	# make.profile
-	if [[ -n "${E_PROFILE}" ]]; then
-		echo "Setting make.profile to ${E_PROFILE}"
-		set_profile "${E_PROFILE}"
-	fi
-
-	# make.conf
-	if [[ -n "${E_PORTDIR}" ]]; then
-		echo "Setting make.conf PORTDIR to ${E_PORTDIR}"
-		if grep -q "^PORTDIR=" ${S}/etc/portage/make.conf; then
-			sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${EROOT}/etc/portage/make.conf
-		else
-			echo "PORTDIR=${E_PORTDIR}" >> ${S}/etc/portage/make.conf
-		fi
-		mkdir -p ${EROOT}${E_PORTDIR}
-	fi
-
-	if [[ -n "${E_DISTDIR}" ]]; then
-		echo "Setting make.conf DISTDIR to ${E_DISTDIR}"
-		if grep -q "^DISTDIR=" ${S}/etc/portage/make.conf; then
-			sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${EROOT}/etc/portage/make.conf
-		else
-			echo "DISTDIR=${E_DISTDIR}" >> ${S}/etc/portage/make.conf
-		fi
-		mkdir -p ${EROOT}${E_DISTDIR}
-	fi
-
-	if [[ -n "${E_PKGDIR}" ]]; then
-		echo "Setting make.conf PKGDIR to ${E_PKGDIR}"
-		if grep -q "^PKGDIR=" ${S}/etc/portage/make.conf; then
-			sed -i "s!^PKGDIR=.*!PKGDIR=\"${E_PKGDIR}\"!" ${S}/etc/portage/make.conf
-		else
-			echo "PKGDIR=${E_PKGDIR}" >> ${S}/etc/portage/make.conf
-		fi
-		mkdir -p ${EROOT}${E_PKGDIR}
-	fi
+ebootstrap-configure() {
+	ebootstrap-configure-portage
+	ebootstrap-configure-system
 }
 
 _EBOOTSTRAP_FUNCTIONS=1
