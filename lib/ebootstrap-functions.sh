@@ -262,7 +262,7 @@ preprocess-config-vars() {
 				echo
 			done
 
-			echo ${line}
+			echo "${line}"
 		done
 		shift
 		add_blank=0
@@ -280,7 +280,7 @@ preprocess-make-conf-vars() {
 			line="${BASH_REMATCH[1]}=\"${BASH_REMATCH[2]}\""
 		fi
 
-		echo ${line}
+		echo "${line}"
 	done
 }
 
