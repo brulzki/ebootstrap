@@ -25,6 +25,28 @@ function die() {
 }
 
 # helper functions
+
+function load-global-config() {
+    # the global config is loaded from
+    #  - /etc/ebootstrap.conf
+    #  - $XDG_CONFIG_HOME/ebootstrap/config
+
+    # if script is run through sudo, the load the original users config
+    # instead of the root user
+    if [[ -n $SUDO_USER ]]; then
+        local HOME=$(eval echo ~${SUDO_USER})
+    fi
+
+    local user_config=${XDG_CONFIG_HOME:-$HOME/.config}/ebootstrap/config
+
+    if [[ -f "/etc/ebootstrap.conf" ]]; then
+        source /etc/ebootstrap.conf
+    fi
+    if [[ -f ${user_config} ]]; then
+        source ${user_config}
+    fi
+}
+
 function find-config-file() {
     local name=${1} config
 
