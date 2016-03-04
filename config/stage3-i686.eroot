@@ -1,0 +1,19 @@
+
+SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/20160223/stage3-i686-20160223.tar.bz2"
+
+E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default"
+
+E_PROFILE="gentoo:default/linux/x86/13.0"
+
+E_PKGDIR="/var/cache/packages.d/stage3-i686"
+
+E_MAKE_CONF="
+	USE=bindist
+
+	PKGDIR=${E_PKGDIR:-/var/cache/packages}
+	DISTDIR=${E_DISTDIR:-/var/cache/distfiles}
+
+	FEATURES=getbinpkg
+	EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
+	PORTAGE_BINHOST=http://binpkg.example.com/packages/stage3-i686
+"
