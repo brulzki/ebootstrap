@@ -13,6 +13,11 @@ function einfo() {
     echo "$@"
 }
 
+__is_fn ewarn || \
+function ewarn() {
+    echo "$@"
+}
+
 __is_fn eerror || \
 function eerror() {
     echo "$@"

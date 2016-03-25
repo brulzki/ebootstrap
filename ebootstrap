@@ -12,8 +12,8 @@ EBOOTSTRAP_LIB=$(readlink -m ${0%/*})/lib
 source ${EBOOTSTRAP_LIB}/ebootstrap-core.sh
 
 usage() {
-	n=${0##*/}
-	cat <<EOF
+    n=${0##*/}
+    cat <<EOF
 Usage: ${n} [action] CONFIG TARGET
 
 Actions: [ --info | --install | --clean | --config ]
@@ -38,25 +38,24 @@ EOF
 load-global-config
 
 case ${1} in
-	--info|--fetch|--install|--config|--clean)
-		phase=${1##*-}
-		shift
-		;;
-	--help)
-		usage --long
-		exit 0
-		;;
-	--*)
-		phase=${1##*-}
-		ewarn Trying phase $phase
-		shift
-		;;
+    --info|--fetch|--install|--config|--clean)
+	phase=${1##*-}
+	shift
+	;;
+    --help)
+	usage --long
+	exit 0
+	;;
+    --*)
+	phase=${1##*-}
+	ewarn "Trying unknown phase $phase"
+	shift
+	;;
 esac
 
-
 if [[ $# -lt 2 ]]; then
-	usage
-	exit -1
+    usage
+    exit -1
 fi
 
 # load the backend
@@ -79,27 +78,29 @@ EROOT=$(readlink -m ${2}) || die "readlink target failed"
 phase=${phase:-install}
 
 case $phase in
-	info)
-		;;
-	clean)
-		einfo "Cleaning"
-		;;
-	install)
-		einfo "Installing into $TARGET"
-		;;
-	config)
-		einfo "Configuring: $TARGET"
-		;;
-	fetch|unpack|prepare|configure|compile|test)
-		ewarn "Running ebuild phase $phase"
-		;;
-	*)
-		ewarn "Trying unknown ebuild phase: $phase"
-		;;
+    info)
+    ;;
+    clean)
+	einfo "Cleaning"
+	;;
+    install)
+	einfo "Installing into $TARGET"
+	;;
+    config)
+	einfo "Configuring: $TARGET"
+	;;
+    fetch|unpack|prepare|configure|compile|test)
+	ewarn "Running ebuild phase $phase"
+	;;
+    *)
+	ewarn "Trying unknown ebuild phase: $phase"
+	;;
 esac
 
-ebootstrap-backend $phase $config
+ebootstrap-backend $phase $config || eerror "Backend failure: $phase $config"
+
+# clean up the temporary build directory after successful install
 if [[ $? -eq 0 && "${phase}" == "install" ]]; then
-	einfo "Cleaning"
-	ebootstrap-backend clean $config
+    einfo "Cleaning"
+    ebootstrap-backend clean $config
 fi

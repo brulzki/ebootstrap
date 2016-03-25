@@ -28,23 +28,25 @@ ebootstrap-backend () {
 
     case $phase in
 	info)
-            echo config=${config}
-            echo EROOT=${EROOT}
+            einfo config=${config}
+            einfo EROOT=${EROOT}
 	    ;;
 	fetch)
-	    echo "Fetching"
+	    einfo "Fetching"
 	    ;;
 	install)
-	    echo "Unpacking ${DISTDIR}/${A}"
+	    einfo "Unpacking ${DISTDIR}/${A}"
 	    ebootstrap-unpack ${DISTDIR}/${A}
 	    ;& # fall through to configure
 	config)
-	    echo "Configuring"
+	    einfo "Configuring"
 	    ebootstrap-configure
 	    ;;
 	clean)
-	    echo "Cleaning"
+	    einfo "Cleaning"
 	    ;;
-
+        *)
+            eerror "Invalid phase: ${phase}" && false
+            ;;
     esac
 }
