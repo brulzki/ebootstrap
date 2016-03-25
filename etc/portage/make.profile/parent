@@ -1,1 +1,2 @@
-ebootstrap:ebootstrap
+# This is the only ebootstrap profile ... there is no parent
+#ebootstrap:ebootstrap
