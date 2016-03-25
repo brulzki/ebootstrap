@@ -50,6 +50,9 @@ function load-global-config() {
     if [[ -f ${user_config} ]]; then
         source ${user_config}
     fi
+
+    # this should always be set... use default values otherwise
+    : ${DISTDIR:=/var/cache/ebootstrap}
 }
 
 function find-config-file() {

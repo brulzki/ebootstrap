@@ -20,11 +20,15 @@ debug-print-function() {
 ebootstrap-backend () {
     local phase=$1 config="${2}"
 
-    # this is probably dangerous
-    #source ${PORTAGE_CONFIGROOT}/etc/portage/make.conf
+    # load the config file
     source ${config}
-    export A=${SRC_URI##*/}
-    export EROOT
+
+    # export these for any portage utilities which may be called
+    export DISTDIR
+    export ROOT=${EROOT}
+
+    # internal portage-type variables... may be used in ebootstrap-functions
+    A=${SRC_URI##*/}
 
     case $phase in
 	info)
