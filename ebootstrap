@@ -7,30 +7,9 @@
 # Usage:
 # ebootstrap CONFIG TARGET
 
-source /lib/rc/sh/functions.sh
+EBOOTSTRAP_LIB=$(readlink -m ${0%/*})/lib
 
-__cfgr=$(readlink -m ${0%/*})
-
-export EBOOTSTRAP_LIB=${__cfgr}/lib
-
-# override the portage settings
-export PORTAGE_CONFIGROOT=${__cfgr}
-export PORTDIR=${__cfgr}/tree
-export PORTAGE_REPOSITORIES="[ebootstrap]
-location = ${PORTDIR}
-sync-type =
-sync-uri =
-"
-
-if [[ ${UID} == 0 ]]; then
-	: ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap}
-else
-	# this enables running portage as non-root, but it spits out
-	# lots of chgrp: operation not permitted errors which I can't
-	# get rid of :(
-	: ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap-${UID}}
-fi
-export PORTAGE_TMPDIR
+source ${EBOOTSTRAP_LIB}/ebootstrap-core.sh
 
 usage() {
 	n=${0##*/}
@@ -53,64 +32,10 @@ EOF
   --config
 	  Configure the system installed at TARGET
 	  This is the action defined in the pkg_config() section fo the ebuild
-
-PORTAGE_CONFIGROOT=${PORTAGE_CONFIGROOT}
 EOF
 }
 
-die() {
-	[ ${#} -eq 0 ] || eerror "${*}"
-	exit 2
-}
-
-if [[ "${EBOOTSTRAP_BACKEND}" == "ebuild" ]]; then
-
-	ebootstrap-ebuild () {
-		ebuild "${@}"
-	}
-
-else
-	source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
-
-	inherit() {
-		:
-	}
-
-	debug-print-function() {
-		# adapted from portage ebuild.sh
-		echo "${1}: entering function, parameters ${*:2}"
-	}
-
-	ebootstrap-ebuild () {
-		local ebuild=$1 phase=$2
-
-		# this is probably dangerous
-		source ${PORTAGE_CONFIGROOT}/etc/portage/make.conf
-		source ${ebuild}
-		export A=${SRC_URI##*/}
-		export EROOT=${ROOT}
-		case $phase in
-			info)
-				echo "Info"
-				;;
-			install)
-				echo "Unpacking ${DISTDIR}/${A}"
-				ebootstrap-unpack ${DISTDIR}/${A}
-				;& # fall through to configure
-			config)
-				echo "Configuring"
-				ebootstrap-configure
-				;;
-			fetch)
-				echo "Fetching"
-				;;
-			clean)
-				echo "Cleaning"
-				;;
-
-		esac
-	}
-fi
+load-global-config
 
 case ${1} in
 	--info|--fetch|--install|--config|--clean)
@@ -134,15 +59,27 @@ if [[ $# -lt 2 ]]; then
 	exit -1
 fi
 
-if [[ -f ${1} ]]; then
-	ebuild=$(readlink -m ${1})
+# load the backend
+if [[ -n "${EBOOTSTRAP_BACKEND}" ]]; then
+    if [[ -f "${EBOOTSTRAP_LIB}/ebootstrap-backend-${EBOOTSTRAP_BACKEND}.sh" ]]; then
+        source ${EBOOTSTRAP_LIB}/ebootstrap-backend-${EBOOTSTRAP_BACKEND}.sh
+    else
+        die "Failed to find backend for ${EBOOTSTRAP_BACKEND}"
+    fi
 else
-	# equery means gentoolkit must be installed
-	ebuild=$(equery which ${1} 2>/dev/null)
+    source ${EBOOTSTRAP_LIB}/ebootstrap-backend-default.sh
+fi
+
+# locate the target configuration file
+if [[ -f ${1} ]]; then
+    config=$(readlink -m ${1})
+else
+    # equery means gentoolkit must be installed
+    config=$(equery which ${1} 2>/dev/null)
 fi
 [[ $? == 0 ]] || die "${0##*/}: there are no ebuilds to satisfy \"${1}\""
 
-TARGET=$(readlink -m ${2}) || die "readlink target failed"
+EROOT=$(readlink -m ${2}) || die "readlink target failed"
 
 phase=${phase:-install}
 
@@ -166,15 +103,8 @@ case $phase in
 		;;
 esac
 
-export TARGET
-# set the ROOT so we can use EROOT in place of TARGET in the ebuilds
-# but this currently prints a warning about not finding the system profile
-# even though we override the profile in PORTAGE_CONFIGROOT ???
-export ROOT=${TARGET}
-
-mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
-ebootstrap-ebuild $ebuild $phase
+ebootstrap-backend $phase $config
 if [[ $? -eq 0 && "${phase}" == "install" ]]; then
 	einfo "Cleaning"
-	ebootstrap-ebuild $ebuild clean
+	ebootstrap-backend clean $config
 fi
