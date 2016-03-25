@@ -66,5 +66,5 @@ function find-config-file() {
             ;;
     esac
     
-    [[ -n "${config}" ]] && echo "${config}"
+    [[ -n "${config}" ]] && echo "${config}" || false
 }

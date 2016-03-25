@@ -71,13 +71,8 @@ else
 fi
 
 # locate the target configuration file
-if [[ -f ${1} ]]; then
-    config=$(readlink -m ${1})
-else
-    # equery means gentoolkit must be installed
-    config=$(equery which ${1} 2>/dev/null)
-fi
-[[ $? == 0 ]] || die "${0##*/}: there are no ebuilds to satisfy \"${1}\""
+config=$(find-config-file ${1})
+[[ $? == 0 ]] || die "${0##*/}: there are no configs to satisfy \"${1}\""
 
 EROOT=$(readlink -m ${2}) || die "readlink target failed"
 
