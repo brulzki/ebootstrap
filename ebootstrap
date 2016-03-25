@@ -16,29 +16,35 @@ usage() {
     cat <<EOF
 Usage: ${n} [action] CONFIG TARGET
 
-Actions: [ --info | --install | --clean | --config ]
+Actions: [ --info | --fetch | --unpack | --install | --config | --clean ]
 EOF
 
 [[ $1 == "--long" ]] && cat <<EOF
-  --install (the default)
-	  Install the system defined in CONFIG to the TARGET directory
-
   --info
-	  Show the output from pkg_info()
+          Show the output from pkg_info()
 
-  --clean
-	  Clean the ebuild temporary files
+  --fetch
+          Fetch the source package
+
+  --unpack
+          Unpack the source packge into the TARGET directory
+
+  --install (the default)
+          Install the system defined in CONFIG to the TARGET directory
 
   --config
-	  Configure the system installed at TARGET
-	  This is the action defined in the pkg_config() section fo the ebuild
+          Configure the system installed at TARGET
+          This is the action defined in the pkg_config() section fo the ebuild
+
+  --clean
+          Clean the ebuild temporary files
 EOF
 }
 
 load-global-config
 
 case ${1} in
-    --info|--fetch|--install|--config|--clean)
+    --info|--fetch|--unpack|--install|--config|--clean)
 	phase=${1##*-}
 	shift
 	;;
@@ -78,18 +84,15 @@ EROOT=$(readlink -m ${2}) || die "readlink target failed"
 phase=${phase:-install}
 
 case $phase in
-    info)
-    ;;
-    clean)
-	einfo "Cleaning"
-	;;
+    info|fetch|unpack|clean)
+        ;;
     install)
-	einfo "Installing into $TARGET"
+	einfo "Installing into $EROOT"
 	;;
     config)
-	einfo "Configuring: $TARGET"
+	einfo "Configuring: $EROOT"
 	;;
-    fetch|unpack|prepare|configure|compile|test)
+    prepare|configure|compile|test)
 	ewarn "Running ebuild phase $phase"
 	;;
     *)

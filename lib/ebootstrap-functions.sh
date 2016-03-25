@@ -64,16 +64,11 @@ ebootstrap-unpack() {
 	#[[ ! -d ${EROOT} ]] || die "rootfs directory already exists"
 	mkdir -p ${EROOT}
 	# test that the target directory is empty
-	[[ "$(ls -A ${EROOT})" ]] && die "TARGET rootfs directory already exists"
+	[[ "$(ls -A ${EROOT})" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
 	# don't use unpack; the handbook requires using the tar -p option
-	echo ">>> Unpacking ${A} into ${EROOT}"
+	einfo ">>> Unpacking ${A} into ${EROOT}"
 	tar -xopf ${A} -C ${EROOT} || die "Failed extracting ${A}"
-}
-
-unpack() {
-	echo ${PWD}
-	echo ">>> Unpack $@"
 }
 
 ebootstrap-unpack-alt() {

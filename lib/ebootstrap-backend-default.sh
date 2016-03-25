@@ -38,6 +38,10 @@ ebootstrap-backend () {
 	fetch)
 	    einfo "Fetching"
 	    ;;
+        unpack)
+            einfo "Unpacking ${DISTDIR}/${A}"
+            ebootstrap-unpack ${DISTDIR}/${A}
+            ;;
 	install)
 	    einfo "Unpacking ${DISTDIR}/${A}"
 	    ebootstrap-unpack ${DISTDIR}/${A}
