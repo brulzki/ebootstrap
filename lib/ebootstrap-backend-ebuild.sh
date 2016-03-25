@@ -28,9 +28,42 @@ fi
 export PORTAGE_TMPDIR
 mkdir -p ${PORTAGE_TMPDIR} || die "Failed to create PORTAGE_TMPDIR"
 
+copy-config-to-overlay() {
+    local overlay="${1}" config="${2}"
+
+    # create the overlay structure and copy the config file
+    mkdir -p $overlay/{profiles,ebootstrap}
+    echo ebootstrap > $overlay/profiles/categories
+    local base=${config##*/}
+    base=${base%.*}
+    mkdir -p $overlay/ebootstrap/$base
+    cp $config $overlay/ebootstrap/$base/$base-9999.ebuild
+
+    # FIXME: why doesn't ebuild inherit from the ebootstrap overlay here?
+    mkdir -p $overlay/eclass
+    cp ${EBOOTSTRAP_LIB}/overlay/eclass/ebootstrap.eclass $overlay/eclass
+
+    # the new ebuild filename can be slurped out by the caller
+    echo $overlay/ebootstrap/$base/$base-9999.ebuild
+}
 
 ebootstrap-backend() {
     local phase=$1 ebuild="${2}"
+
+    if [[ "${ebuild##*.}" != "ebuild" ]]; then
+        # ebuild expects the config to be an ebuild file in a proper overlay structure
+        # so make a temporary copy if necessary
+        tmp_overlay=${PORTAGE_TMPDIR}/tmp-overlay
+        ebuild=$(copy-config-to-overlay $tmp_overlay $ebuild)
+
+        # add the overlay ro repos.conf, otherwise ebuild tries
+        # unsuccessfully to add it
+        PORTAGE_REPOSITORIES="${PORTAGE_REPOSITORIES}[tmp-overlay]
+location = ${tmp_overlay}
+sync-type =
+sync-uri =
+"
+    fi
 
     # set the ROOT so we can use EROOT in place of TARGET in the ebuilds but
     # this currently prints a warning about not finding the system profile
@@ -40,4 +73,11 @@ ebootstrap-backend() {
     export EBOOTSTRAP_LIB
 
     /usr/bin/ebuild "${ebuild}" ${phase}
+
+    if [[ "${phase}" == "clean" && -n "${tmp_overlay}" ]]; then
+        einfo Cleaning $tmp_overlay
+        if [[ -d ${PORTAGE_TMPDIR}/tmp-overlay ]]; then
+            rm -rf ${PORTAGE_TMPDIR}/tmp-overlay
+        fi
+    fi
 }
