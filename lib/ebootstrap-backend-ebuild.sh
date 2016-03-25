@@ -9,8 +9,8 @@
 # place of the system configuration.
 
 # override the portage settings
-export PORTAGE_CONFIGROOT=$(readlink -m ${0%/*})
-export PORTDIR=${PORTAGE_CONFIGROOT}/tree
+export PORTAGE_CONFIGROOT=${EBOOTSTRAP_LIB}
+export PORTDIR=${PORTAGE_CONFIGROOT}/overlay
 export PORTAGE_REPOSITORIES="[ebootstrap]
 location = ${PORTDIR}
 sync-type =
