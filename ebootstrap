@@ -43,25 +43,25 @@ EOF
 
 load-global-config
 
-case ${1} in
-    --info|--fetch|--unpack|--install|--config|--clean)
-	phase=${1##*-}
-	shift
-	;;
-    --force)
-        EBOOTSTRAP_FORCE=1
-        shift
-        ;;
-    --help)
-	usage --long
-	exit 0
-	;;
-    --*)
-	phase=${1##*-}
-	ewarn "Trying unknown phase $phase"
-	shift
-	;;
-esac
+while [[ "${1}" =~ ^-- ]]; do
+    case ${1} in
+        --info|--fetch|--unpack|--install|--config|--clean)
+	    phase=${1##*-}
+	    ;;
+        --force)
+            EBOOTSTRAP_FORCE=1
+            ;;
+        --help)
+	    usage --long
+	    exit 0
+	    ;;
+        --*)
+	    phase=${1##*-}
+	    ewarn "Trying unknown phase $phase"
+	    ;;
+    esac
+    shift
+done
 
 if [[ $# -lt 2 ]]; then
     usage
