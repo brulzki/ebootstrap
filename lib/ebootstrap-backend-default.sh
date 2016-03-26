@@ -36,7 +36,8 @@ ebootstrap-backend () {
             einfo EROOT=${EROOT}
 	    ;;
 	fetch)
-	    einfo "Fetching"
+            #einfo "Fetching"
+            ebootstrap-fetch ${SRC_URI}
 	    ;;
         unpack)
             einfo "Unpacking ${DISTDIR}/${A}"

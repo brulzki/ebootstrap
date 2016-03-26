@@ -7,7 +7,8 @@ inherit ebootstrap
 
 DESCRIPTION="This is a test stage ebuild for ebootstrap"
 HOMEPAGE="http://github.com/brulzki/ebootstrap"
-SRC_URI="http:///github.com/brulzki/ebootstrap/stage3-dummy.tar.xz"
+#SRC_URI="https://github.com/brulzki/ebootstrap/test/stage3-dummy.tar.xz"
+SRC_URI="http://binpkg.example.com/stages/stage3-dummy.tar.xz"
 #LICENSE=""
 SLOT="0"
 KEYWORDS="ebootstrap"

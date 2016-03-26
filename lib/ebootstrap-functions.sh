@@ -54,6 +54,19 @@
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
+ebootstrap-fetch() {
+    # fetch the source archive
+    debug-print-function ${FUNCNAME} "${@}"
+
+    local src_uri="${1}"
+    local A=${src_uri##*/}
+
+    if [[ $EBOOTSTRAP_FORCE == 1 || ! -f ${DISTDIR}/${A} ]]; then
+        einfo "Fetching ${src_uri}"
+        wget ${src_uri} -O ${DISTDIR}/${A}
+    fi
+}
+
 ebootstrap-unpack() {
 	# unpack the source archive into ${EROOT}
 	debug-print-function ${FUNCNAME} "${@}"

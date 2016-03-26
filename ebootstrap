@@ -48,6 +48,10 @@ case ${1} in
 	phase=${1##*-}
 	shift
 	;;
+    --force)
+        EBOOTSTRAP_FORCE=1
+        shift
+        ;;
     --help)
 	usage --long
 	exit 0
