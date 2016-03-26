@@ -67,6 +67,23 @@ ebootstrap-fetch() {
     fi
 }
 
+function fstype() {
+    local path="${1}"
+
+    df -T "${path}" | awk '/^\// { print $2 }' 2> /dev/null
+}
+
+function create-root() {
+    local path=$(readlink -m "${1}")
+
+    if [[ $UID == 0 && $(fstype "${path%/*}") == "btrfs" ]]; then
+        einfo "Creating btrfs subvolume ${path}"
+        btrfs subvolume create "${path}"
+    else
+        mkdir -p "${path}"
+    fi
+}
+
 ebootstrap-unpack() {
 	# unpack the source archive into ${EROOT}
 	debug-print-function ${FUNCNAME} "${@}"
@@ -74,8 +91,11 @@ ebootstrap-unpack() {
 	local A="$1"
 
 	[[ ${EROOT} == "/" ]] && dir "ERROR: refusing to install into \"/\""
-	#[[ ! -d ${EROOT} ]] || die "rootfs directory already exists"
-	mkdir -p ${EROOT}
+
+        if [[ ! -d ${EROOT} ]]; then
+            create-root ${EROOT} || die "Failed creating rootfs: ${EROOT}"
+        fi
+
 	# test that the target directory is empty
 	[[ "$(ls -A ${EROOT})" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
