@@ -1,4 +1,6 @@
 
+: ${EMERGE_OPTS:="--ask --verbose"}
+
 #if [[ -f /lib/rc/sh/functions.sh ]]; then
 #    source /lib/rc/sh/functions.sh
 #fi
@@ -75,4 +77,11 @@ function find-config-file() {
     esac
     
     [[ -n "${config}" ]] && echo "${config}" || false
+}
+
+ebootstrap-emerge() {
+    # call the system emerge with options tailored to use within ebootstrap
+    debug-print-function ${FUNCNAME} "${@}"
+
+    FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
 }

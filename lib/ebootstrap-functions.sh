@@ -54,8 +54,6 @@
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
-: ${EMERGE_OPTS:="--ask --verbose"}
-
 ebootstrap-fetch() {
     # fetch the source archive
     debug-print-function ${FUNCNAME} "${@}"
@@ -200,8 +198,8 @@ ebootstrap-install() {
 
     # install the system
     einfo "emerging system packages"
-    emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} -1 @system
-    emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} -1 @world
+    ebootstrap-emerge -1 @system
+    ebootstrap-emerge -1 @world
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
