@@ -46,19 +46,19 @@ load-global-config
 while [[ "${1}" =~ ^-- ]]; do
     case ${1} in
         --info|--fetch|--unpack|--install|--config|--clean)
-	    phase=${1##*-}
-	    ;;
+            phase=${1##*-}
+            ;;
         --force)
             EBOOTSTRAP_FORCE=1
             ;;
         --help)
-	    usage --long
-	    exit 0
-	    ;;
+            usage --long
+            exit 0
+            ;;
         --*)
-	    phase=${1##*-}
-	    ewarn "Trying unknown phase $phase"
-	    ;;
+            phase=${1##*-}
+            ewarn "Trying unknown phase $phase"
+            ;;
     esac
     shift
 done
@@ -91,17 +91,17 @@ case $phase in
     info|fetch|unpack|clean)
         ;;
     install)
-	einfo "Installing into $EROOT"
-	;;
+        einfo "Installing into $EROOT"
+        ;;
     config)
-	einfo "Configuring: $EROOT"
-	;;
+        einfo "Configuring: $EROOT"
+        ;;
     prepare|configure|compile|test)
-	ewarn "Running ebuild phase $phase"
-	;;
+        ewarn "Running ebuild phase $phase"
+        ;;
     *)
-	ewarn "Trying unknown ebuild phase: $phase"
-	;;
+        ewarn "Trying unknown ebuild phase: $phase"
+        ;;
 esac
 
 ebootstrap-backend $phase $config || eerror "Backend failure: $phase $config"

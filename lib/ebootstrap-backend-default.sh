@@ -31,14 +31,14 @@ ebootstrap-backend () {
     A=${SRC_URI##*/}
 
     case $phase in
-	info)
+        info)
             einfo config=${config}
             einfo EROOT=${EROOT}
-	    ;;
-	fetch)
+            ;;
+        fetch)
             #einfo "Fetching"
             ebootstrap-fetch ${SRC_URI}
-	    ;;
+            ;;
         unpack)
             einfo "Unpacking ${DISTDIR}/${A}"
             ebootstrap-unpack ${DISTDIR}/${A}
@@ -52,14 +52,14 @@ ebootstrap-backend () {
             ebootstrap-unpack ${DISTDIR}/${A}
             ebootstrap-prepare
             ebootstrap-install
-	    ;& # fall through to configure
-	config)
-	    einfo "Configuring"
-	    ebootstrap-configure
-	    ;;
-	clean)
+            ;& # fall through to configure
+        config)
+            einfo "Configuring"
+            ebootstrap-configure
+            ;;
+        clean)
             ebootstrap-clean
-	    ;;
+            ;;
         *)
             eerror "Invalid phase: ${phase}" && false
             ;;
