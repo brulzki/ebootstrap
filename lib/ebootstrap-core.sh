@@ -1,9 +1,15 @@
+# Copyright (c) 2016 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+# @AUTHOR:
+# Bruce Schultz <brulzki@gmail.com>
+# @BLURB: Core functions for ebootstrap
+# @DESCRIPTION:
+# Implements core functions used by ebootstrap.
+
+if [[ ! ${_EBOOTSTRAP_CORE} ]]; then
 
 : ${EMERGE_OPTS:="--ask --verbose"}
-
-#if [[ -f /lib/rc/sh/functions.sh ]]; then
-#    source /lib/rc/sh/functions.sh
-#fi
 
 __is_fn() {
     #declare -f "${1}" > /dev/null
@@ -75,7 +81,7 @@ function find-config-file() {
             fi
             ;;
     esac
-    
+
     [[ -n "${config}" ]] && echo "${config}" || false
 }
 
@@ -85,3 +91,6 @@ ebootstrap-emerge() {
 
     FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
 }
+
+_EBOOTSTRAP_CORE=1
+fi
