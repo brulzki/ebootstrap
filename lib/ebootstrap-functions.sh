@@ -54,6 +54,8 @@
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
+: ${EMERGE_OPTS:="--ask --verbose"}
+
 ebootstrap-fetch() {
     # fetch the source archive
     debug-print-function ${FUNCNAME} "${@}"
@@ -74,6 +76,8 @@ function fstype() {
 }
 
 function create-root() {
+    debug-print-function ${FUNCNAME} "${@}"
+
     local path=$(readlink -m "${1}")
 
     if [[ $UID == 0 && $(fstype "${path%/*}") == "btrfs" ]]; then
@@ -81,6 +85,30 @@ function create-root() {
         btrfs subvolume create "${path}"
     else
         mkdir -p "${path}"
+    fi
+}
+
+function ebootstrap-init-bare() {
+    debug-print-function ${FUNCNAME} "${@}"
+
+    # catalyst creates a bunch of .keep files around the place... I guess I should too
+    local rootdirs="boot dev etc/profile.d etc/xml home media mnt opt proc root run
+                    sys tmp usr/local/bin usr/local/sbin usr/src var/cache var/empty
+                    var/lib var/log var/spool var/tmp"
+
+    for d in $rootdirs; do
+        mkdir -p ${EROOT}/${d} && \
+        touch ${EROOT}/${d}/.keep
+    done
+
+    # create the minimal devices required to boot (with hotplugging)
+    if [ $UID == 0 ]; then
+        mknod ${EROOT}/dev/console c 5 1
+        mknod ${EROOT}/dev/null    c 1 3
+        mknod ${EROOT}/dev/ptmx    c 4 2
+        mknod ${EROOT}/dev/ram0    b 1 0
+        mknod ${EROOT}/dev/tty0    c 5 0
+        mknod ${EROOT}/dev/ttyS0   c 4 64
     fi
 }
 
@@ -99,9 +127,14 @@ ebootstrap-unpack() {
 	# test that the target directory is empty
 	[[ "$(ls -A ${EROOT})" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
-	# don't use unpack; the handbook requires using the tar -p option
-	einfo ">>> Unpacking ${A} into ${EROOT}"
-	tar -xopf ${A} -C ${EROOT} || die "Failed extracting ${A}"
+        if [[ ${EBOOTSTRAP_BARE} != 1 ]]; then
+            # don't use unpack; the handbook requires using the tar -p option
+            einfo ">>> Unpacking ${A} into ${EROOT}"
+            tar -xopf ${A} -C ${EROOT} || die "Failed extracting ${A}"
+        else
+            einfo ">>> Initialising bare rootfs in ${EROOT}"
+            ebootstrap-init-bare
+        fi
 }
 
 ebootstrap-unpack-alt() {
@@ -136,6 +169,43 @@ ebootstrap-unpack-alt() {
 	done
 }
 
+ebootstrap-prepare() {
+    debug-print-function ${FUNCNAME} "${@}"
+
+    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
+
+    ebootstrap-configure-portage
+
+    if [[ $UID == 0 ]]; then
+        # FIXME: this assumes that the paths are the same between the host
+        # and the the rootfs... may not necessarily be the case
+        einfo "Mounting portage dirs from host"
+        for v in ${REPOPATH} ${E_DISTDIR} ${E_PKGDIR}; do
+            mount --bind ${v} ${EROOT}/${v} || die "Failed to mount ${v}"
+        done
+    else
+        ewarn ">>> Skipping mounting of portage dirs without root access"
+    fi
+
+    # FIXME: these are my personal config preferences
+    # needs to go into a hooks function somewhere
+    mkdir -p ${EROOT}/mnt/{system,tmp}
+    mkdir -p ${EROOT}/boot/efi
+}
+
+ebootstrap-install() {
+    debug-print-function ${FUNCNAME} "${@}"
+
+    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
+
+    # install the system
+    einfo "emerging system packages"
+    emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} -1 @system
+    emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} -1 @world
+
+    # just automerge all the config changes
+    ROOT=${EROOT} etc-update --automode -5
+}
 
 # relative_name taken from /usr/share/eselect/libs/path-manipulation.bash
 # license: GPL2 or later
@@ -438,8 +508,24 @@ ebootstrap-configure-system() {
 }
 
 ebootstrap-configure() {
-	ebootstrap-configure-portage
-	ebootstrap-configure-system
+    debug-print-function ${FUNCNAME} "${@}"
+
+    #ebootstrap-configure-portage
+    ebootstrap-configure-system
+}
+
+ebootstrap-clean() {
+    debug-print-function ${FUNCNAME} "${@}"
+
+    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
+
+    # clean out any new items
+    ROOT=${EROOT} eselect news read > /dev/null
+
+    # cleanup the mounts
+    for d in $(mount | grep ${EROOT} | cut -d ' ' -f 3); do
+        umount ${d}
+    done
 }
 
 _EBOOTSTRAP_FUNCTIONS=1

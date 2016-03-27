@@ -43,16 +43,22 @@ ebootstrap-backend () {
             einfo "Unpacking ${DISTDIR}/${A}"
             ebootstrap-unpack ${DISTDIR}/${A}
             ;;
-	install)
-	    einfo "Unpacking ${DISTDIR}/${A}"
-	    ebootstrap-unpack ${DISTDIR}/${A}
+        prepare)
+            einfo "Preparing ${EROOT}"
+            ebootstrap-prepare
+            ;;
+        install)
+            einfo "Installing to ${EROOT}"
+            ebootstrap-unpack ${DISTDIR}/${A}
+            ebootstrap-prepare
+            ebootstrap-install
 	    ;& # fall through to configure
 	config)
 	    einfo "Configuring"
 	    ebootstrap-configure
 	    ;;
 	clean)
-	    einfo "Cleaning"
+            ebootstrap-clean
 	    ;;
         *)
             eerror "Invalid phase: ${phase}" && false
