@@ -178,9 +178,10 @@ ebootstrap-prepare() {
         # FIXME: this assumes that the paths are the same between the host
         # and the the rootfs... may not necessarily be the case
         einfo "Mounting portage dirs from host"
-        for v in ${REPOPATH} ${E_DISTDIR} ${E_PKGDIR}; do
+        for v in ${REPOPATH} ${E_DISTDIR} ${E_PKGDIR} /dev /dev/pts /proc; do
             mount --bind ${v} ${EROOT}/${v} || die "Failed to mount ${v}"
         done
+        cp /etc/resolv.conf ${EROOT}/etc/resolv.conf
     else
         ewarn ">>> Skipping mounting of portage dirs without root access"
     fi
@@ -520,7 +521,9 @@ ebootstrap-clean() {
     ROOT=${EROOT} eselect news read > /dev/null
 
     # cleanup the mounts
-    for d in $(mount | grep ${EROOT} | cut -d ' ' -f 3); do
+    # ensure we only unmount subdirs of EROOT (not EROOT itself)
+    # sort -r ensures that lowest subdirs are umounted first
+    for d in $(mount | grep ${EROOT}/ | cut -d ' ' -f 3 | sort -r); do
         umount ${d}
     done
 }
