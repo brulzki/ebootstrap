@@ -39,18 +39,23 @@ function die() {
 
 # helper functions
 
-function load-global-config() {
-    # the global config is loaded from
-    #  - /etc/ebootstrap.conf
-    #  - $XDG_CONFIG_HOME/ebootstrap/config
-
+# Find the appropriate user config file path
+xdg-config-dir() {
     # if script is run through sudo, the load the original users config
     # instead of the root user
     if [[ -n $SUDO_USER ]]; then
         local HOME=$(eval echo ~${SUDO_USER})
     fi
 
-    local user_config=${XDG_CONFIG_HOME:-$HOME/.config}/ebootstrap/config
+    echo ${XDG_CONFIG_HOME:-$HOME/.config}/ebootstrap
+}
+
+function load-global-config() {
+    # the global config is loaded from
+    #  - /etc/ebootstrap.conf
+    #  - $XDG_CONFIG_HOME/ebootstrap/config
+
+    local user_config=$(xdg-config-dir)/config
 
     if [[ -f "/etc/ebootstrap.conf" ]]; then
         source /etc/ebootstrap.conf
@@ -65,6 +70,7 @@ function load-global-config() {
 
 function find-config-file() {
     local name=${1} config
+    local config_dir=$(xdg-config-dir)
 
     case ${name} in
         /* | ./*)
@@ -75,6 +81,8 @@ function find-config-file() {
                 config=$(readlink -m ${1})
             elif [[ -f ${0%/*}/config/${1}.eroot ]]; then
                 config=$(readlink -m ${0%/*}/config/${1}.eroot)
+            elif [[ -f ${config_dir}/${1}.eroot ]]; then
+                config=$(readlink -m ${config_dir}/${1}.eroot)
             else
                 # equery means gentoolkit must be installed
                 config=$(equery which ${1} 2>/dev/null)
