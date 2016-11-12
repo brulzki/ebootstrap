@@ -14,7 +14,7 @@ source ${EBOOTSTRAP_LIB}/ebootstrap-core.sh
 usage() {
     n=${0##*/}
     cat <<EOF
-Usage: ${n} [action] CONFIG TARGET
+Usage: ${n} [action] [options] CONFIG TARGET
 
 Actions: [ --info | --fetch | --unpack | --install | --config | --clean ]
 EOF
@@ -34,10 +34,18 @@ EOF
 
   --config
           Configure the system installed at TARGET
-          This is the action defined in the pkg_config() section fo the ebuild
+          This is the action defined in the pkg_config() section of the ebuild
 
   --clean
           Clean the ebuild temporary files
+
+Options:
+  --bare
+          Do an install from a binary package repository without unpacking
+          a stage3 file first. (This is experimental)
+
+  --force
+          Try harder to do something that would otherwise fail
 EOF
 }
 
@@ -50,6 +58,9 @@ while [[ "${1}" =~ ^-- ]]; do
             ;;
         --force)
             EBOOTSTRAP_FORCE=1
+            ;;
+        --bare)
+            EBOOTSTRAP_BARE=1
             ;;
         --help)
             usage --long
