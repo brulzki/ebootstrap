@@ -170,9 +170,10 @@ ebootstrap-unpack-alt() {
 ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
-
-    ebootstrap-configure-portage
+    if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
+        einfo ">>> Initialising bare rootfs in ${EROOT}"
+        ebootstrap-init-bare
+    fi
 
     if [[ $UID == 0 ]]; then
         # FIXME: this assumes that the paths are the same between the host
@@ -508,7 +509,15 @@ ebootstrap-configure-system() {
 ebootstrap-configure() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    #ebootstrap-configure-portage
+    ebootstrap-configure-portage
+    if [[ ${EBOOTSTRAP_BARE} != 1 ]]; then
+        ebootstrap-configure-system
+    fi
+}
+
+ebootstrap-config() {
+    debug-print-function ${FUNCNAME} "${@}"
+
     ebootstrap-configure-system
 }
 

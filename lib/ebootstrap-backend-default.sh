@@ -47,15 +47,19 @@ ebootstrap-backend () {
             einfo "Preparing ${EROOT}"
             ebootstrap-prepare
             ;;
+        configure)
+            einfo "Configuring ${EROOT}"
+            ebootstrap-configure
+            ;;
         install)
             einfo "Installing to ${EROOT}"
-            ebootstrap-unpack ${DISTDIR}/${A}
-            ebootstrap-prepare
+#            ebootstrap-unpack ${DISTDIR}/${A}
+#            ebootstrap-prepare
             ebootstrap-install
-            ;& # fall through to configure
+            ;& # fall through to config
         config)
             einfo "Configuring"
-            ebootstrap-configure
+            ebootstrap-configure-system
             ;;
         clean)
             ebootstrap-clean

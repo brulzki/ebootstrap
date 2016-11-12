@@ -68,6 +68,10 @@ ebootstrap_pkg_preinst() {
 	die "ebootstrap ebuilds can not be merged into a system"
 }
 
+ebootstrap_pkg_config() {
+	ebootstrap-configure-system
+}
+
 # trace phase functions which have not been implemented
 for _f in src_unpack  \
 	  src_configure src_compile src_test src_install \
