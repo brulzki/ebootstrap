@@ -17,22 +17,22 @@ __is_fn() {
 }
 
 __is_fn einfo || \
-function einfo() {
+einfo() {
     echo "$@"
 }
 
 __is_fn ewarn || \
-function ewarn() {
+ewarn() {
     echo "$@"
 }
 
 __is_fn eerror || \
-function eerror() {
+eerror() {
     echo "$@"
 }
 
 __is_fn die || \
-function die() {
+die() {
     [ ${#} -eq 0 ] || eerror "${*}"
     exit 2
 }
@@ -50,7 +50,7 @@ xdg-config-dir() {
     echo ${XDG_CONFIG_HOME:-$HOME/.config}/ebootstrap
 }
 
-function load-global-config() {
+load-global-config() {
     # the global config is loaded from
     #  - /etc/ebootstrap.conf
     #  - $XDG_CONFIG_HOME/ebootstrap/config
@@ -68,7 +68,7 @@ function load-global-config() {
     : ${DISTDIR:=/var/cache/ebootstrap}
 }
 
-function find-config-file() {
+find-config-file() {
     local name=${1} config
     local config_dir=$(xdg-config-dir)
 

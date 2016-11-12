@@ -67,13 +67,13 @@ ebootstrap-fetch() {
     fi
 }
 
-function fstype() {
+fstype() {
     local path="${1}"
 
     df -T "${path}" | awk '/^\// { print $2 }' 2> /dev/null
 }
 
-function create-root() {
+create-root() {
     debug-print-function ${FUNCNAME} "${@}"
 
     local path=$(readlink -m "${1}")
@@ -86,7 +86,7 @@ function create-root() {
     fi
 }
 
-function ebootstrap-init-bare() {
+ebootstrap-init-bare() {
     debug-print-function ${FUNCNAME} "${@}"
 
     # catalyst creates a bunch of .keep files around the place... I guess I should too
