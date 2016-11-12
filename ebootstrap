@@ -46,7 +46,7 @@ load-global-config
 while [[ "${1}" =~ ^-- ]]; do
     case ${1} in
         --info|--fetch|--unpack|--install|--config|--clean)
-            phase=${1##*-}
+            action=${1##*-}
             ;;
         --force)
             EBOOTSTRAP_FORCE=1
@@ -56,8 +56,8 @@ while [[ "${1}" =~ ^-- ]]; do
             exit 0
             ;;
         --*)
-            phase=${1##*-}
-            ewarn "Trying unknown phase $phase"
+            action=${1##*-}
+            ewarn "Trying unknown command ${action}"
             ;;
     esac
     shift
@@ -85,29 +85,29 @@ config=$(find-config-file ${1})
 
 EROOT=$(readlink -m ${2}) || die "readlink target failed"
 
-phase=${phase:-install}
+action=${action:-merge}
 
-case $phase in
-    info|fetch|unpack|clean)
+case ${action} in
+    info|fetch|unpack|prepare|clean)
         ;;
-    install)
-        einfo "Installing into $EROOT"
+    install|merge)
+        einfo "Installing into ${EROOT}"
         ;;
-    config)
-        einfo "Configuring: $EROOT"
+    configure|config)
+        einfo "Configuring: ${EROOT}"
         ;;
-    prepare|configure|compile|test)
-        ewarn "Running ebuild phase $phase"
+    compile|test)
+        ewarn "Running ebuild phase ${action}"
         ;;
     *)
-        ewarn "Trying unknown ebuild phase: $phase"
+        ewarn "Trying unknown ebuild command: ${action}"
         ;;
 esac
 
-ebootstrap-backend $phase $config || eerror "Backend failure: $phase $config"
+ebootstrap-backend ${action} "${config}" || eerror "Backend failure: ${action} ${config}"
 
 # clean up the temporary build directory after successful install
-if [[ $? -eq 0 && "${phase}" == "install" ]]; then
+if [[ $? -eq 0 && "${action}" == "install" ]]; then
     einfo "Cleaning"
     ebootstrap-backend clean $config
 fi

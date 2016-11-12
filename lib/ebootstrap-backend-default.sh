@@ -18,7 +18,7 @@ debug-print-function() {
 }
 
 ebootstrap-backend () {
-    local phase=$1 config="${2}"
+    local command="${1}" config="${2}" phases phase
 
     # load the config file
     source ${config}
@@ -30,42 +30,73 @@ ebootstrap-backend () {
     # internal portage-type variables... may be used in ebootstrap-functions
     A=${SRC_URI##*/}
 
-    case $phase in
+    case $command in
         info)
             einfo config=${config}
             einfo EROOT=${EROOT}
             ;;
         fetch)
-            #einfo "Fetching"
-            ebootstrap-fetch ${SRC_URI}
+            phases="fetch"
             ;;
         unpack)
-            einfo "Unpacking ${DISTDIR}/${A}"
-            ebootstrap-unpack ${DISTDIR}/${A}
+            phases="fetch unpack"
             ;;
         prepare)
             einfo "Preparing ${EROOT}"
-            ebootstrap-prepare
+            phases="fetch unpack prepare"
             ;;
         configure)
             einfo "Configuring ${EROOT}"
-            ebootstrap-configure
+            phases="fetch unpack prepare configure"
             ;;
         install)
+            phases="fetch unpack prepare configure install"
             einfo "Installing to ${EROOT}"
-#            ebootstrap-unpack ${DISTDIR}/${A}
-#            ebootstrap-prepare
-            ebootstrap-install
-            ;& # fall through to config
+            ;;
         config)
             einfo "Configuring"
-            ebootstrap-configure-system
+            phases="fetch unpack prepare configure install config"
             ;;
         clean)
-            ebootstrap-clean
+            phases="clean"
+            ;;
+        merge)
+            phases="fetch unpack prepare configure install config clean"
+            einfo "Installing to ${EROOT}"
             ;;
         *)
-            eerror "Invalid phase: ${phase}" && false
+            eerror "Invalid command: ${command}" && false
             ;;
     esac
+
+    for action in ${phases}; do
+        case ${action} in
+            fetch)
+                #einfo "Fetching"
+                ebootstrap-fetch ${SRC_URI}
+                ;;
+            unpack)
+                ebootstrap-unpack ${DISTDIR}/${A}
+                ;;
+            clean)
+                # do not need to track the state of these actions
+                ebootstrap-${action}
+                ;;
+            *)
+                # execute the current action if it has not already completed successfully
+                [[ -d "${EROOT}" ]] || die "Invalid EROOT ${EROOT} (${action})"
+                mkdir -p "${EROOT}/var/tmp/ebootstrap"
+                if [[ ! -f "${EROOT}/var/tmp/ebootstrap/${action}" ]]; then
+                    einfo ">>> ebootstrap phase: ${action}"
+                    ebootstrap-${action}
+                    if [[ $? == 0 ]]; then
+                        touch "${EROOT}/var/tmp/ebootstrap/${action}"
+                    else
+                        # don't process any further phases
+                        break
+                    fi
+                fi
+                ;;
+        esac
+    done
 }
