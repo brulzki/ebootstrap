@@ -129,9 +129,6 @@ ebootstrap-unpack() {
         # don't use unpack; the handbook requires using the tar -p option
         einfo ">>> Unpacking ${A} into ${EROOT}"
         tar -xopf ${A} -C ${EROOT} || die "Failed extracting ${A}"
-    else
-        einfo ">>> Initialising bare rootfs in ${EROOT}"
-        ebootstrap-init-bare
     fi
 }
 
@@ -180,9 +177,13 @@ ebootstrap-prepare() {
         # and the the rootfs... may not necessarily be the case
         einfo "Mounting portage dirs from host"
         for v in ${REPOPATH} ${E_DISTDIR} ${E_PKGDIR} /dev /dev/pts /proc; do
-            mount --bind ${v} ${EROOT}/${v} || die "Failed to mount ${v}"
+            if [[ ! -d "${EROOT}/${v}" ]]; then
+                einfo "Creating mount point at ${EROOT}/${v}"
+                mkdir -p "${EROOT}/${v}"
+            fi
+            mount --bind "${v}" "${EROOT}/${v}" || die "Failed to mount ${v}"
         done
-        cp /etc/resolv.conf ${EROOT}/etc/resolv.conf
+        cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
     else
         ewarn ">>> Skipping mounting of portage dirs without root access"
     fi
