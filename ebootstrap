@@ -14,7 +14,7 @@ source ${EBOOTSTRAP_LIB}/ebootstrap-core.sh
 usage() {
     n=${0##*/}
     cat <<EOF
-Usage: ${n} [action] [options] CONFIG TARGET
+Usage: ${n} [action] [options] CONFIG [TARGET]
 
 Actions: [ --info | --fetch | --unpack | --install | --config | --clean ]
 EOF
@@ -74,7 +74,11 @@ while [[ "${1}" =~ ^-- ]]; do
     shift
 done
 
-if [[ $# -lt 2 ]]; then
+__args=2
+if [[ ${action} =~ ^(info|fetch)$ ]]; then
+    __args=1
+fi
+if [[ $# < ${__args} ]]; then
     usage
     exit -1
 fi
@@ -94,7 +98,11 @@ fi
 config=$(find-config-file ${1})
 [[ $? == 0 ]] || die "${0##*/}: there are no configs to satisfy \"${1}\""
 
-EROOT=$(readlink -m ${2}) || die "readlink target failed"
+# only set EROOT if needed or a argument was passed in
+if [[ __args == 2 || -n ${2} ]]; then
+    EROOT=$(readlink -m ${2}) || die "readlink target failed"
+fi
+unset __args
 
 action=${action:-merge}
 
