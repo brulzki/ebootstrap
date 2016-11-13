@@ -213,6 +213,10 @@ ebootstrap-install() {
 
     # install the system
     einfo "emerging system packages"
+    # amd64 link from /lib->lib64 is created by baselayout
+    # make sure this is done before merging other packages
+    # (its probably bug is packages which install directly to /lib ?)
+    ebootstrap-emerge -1 baselayout
     ebootstrap-emerge -1 @system
     ebootstrap-emerge -1 @world
 
