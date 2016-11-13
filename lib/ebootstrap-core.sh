@@ -100,5 +100,9 @@ ebootstrap-emerge() {
     FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
 }
 
+var-expand() {
+    eval echo ${!1}
+}
+
 _EBOOTSTRAP_CORE=1
 fi

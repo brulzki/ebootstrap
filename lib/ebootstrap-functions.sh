@@ -166,6 +166,7 @@ ebootstrap-unpack-alt() {
 
 ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
+    local src dest lv
 
     if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
         einfo ">>> Initialising bare rootfs in ${EROOT}"
@@ -176,12 +177,23 @@ ebootstrap-prepare() {
         # FIXME: this assumes that the paths are the same between the host
         # and the the rootfs... may not necessarily be the case
         einfo "Mounting portage dirs from host"
-        for v in ${REPOPATH} ${E_DISTDIR} ${E_PKGDIR} /dev /dev/pts /proc; do
-            if [[ ! -d "${EROOT}/${v}" ]]; then
-                einfo "Creating mount point at ${EROOT}/${v}"
-                mkdir -p "${EROOT}/${v}"
+        for v in REPOPATH E_DISTDIR E_PKGDIR /dev /dev/pts /proc; do
+            if [[ $v == /* ]]; then
+                src="${v}"
+                dest="${v}"
+            else
+                # $v is a variable name reference
+                # expand $v to a LOCAL_ variable reference if necessary
+                lv="LOCAL_${v/#E_/}"
+                [[ -z ${!lv} ]] && lv="${v}"
+                src="$(var-expand ${lv})"
+                dest="$(var-expand ${v})"
             fi
-            mount --bind "${v}" "${EROOT}/${v}" || die "Failed to mount ${v}"
+            if [[ ! -d "${EROOT}${dest}" ]]; then
+                einfo "Creating mount point at ${EROOT}${dest}"
+                mkdir -p "${EROOT}${dest}"
+            fi
+            mount --bind "${src}" "${EROOT}${dest}" || die "Failed to mount ${dest}"
         done
         cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
     else

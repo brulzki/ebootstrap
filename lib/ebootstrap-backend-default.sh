@@ -29,6 +29,15 @@ ebootstrap-backend () {
 
     # internal portage-type variables... may be used in ebootstrap-functions
     A=${SRC_URI##*/}
+    P=${config##*/}
+    PN=${P%.*}
+
+    # expand global vars
+    for v in E_PKGDIR LOCAL_PKGDIR; do
+        if [[ -n "${!v}" ]]; then
+            declare ${v}="$(var-expand ${v})"
+        fi
+    done
 
     case $command in
         info)
