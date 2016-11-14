@@ -107,10 +107,24 @@ find-config-file() {
     [[ -n "${config}" ]] && echo "${config}" || false
 }
 
+__eroot-repos-config() {
+    # prints a modified repositories configuration for the EROOT with locations
+    # altered to be the full path relative to the host root
+    PORTAGE_CONFIGROOT="${EROOT}" portageq repos_config / | \
+        awk -v EROOT="${EROOT}" -e '
+            /^\[/ { print }
+            /^location/ { print $1, $2, EROOT$3 }'
+}
+
 ebootstrap-emerge() {
     # call the system emerge with options tailored to use within ebootstrap
     debug-print-function ${FUNCNAME} "${@}"
 
+    # Make PKGDIR and DISTDIR within the EROOT relative to the host root
+    # Override repository paths to be relative to the host root
+    PKGDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq pkgdir)" \
+    DISTDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq distdir)" \
+    PORTAGE_REPOSITORIES="$(__eroot-repos-config)" \
     FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
 }
 
