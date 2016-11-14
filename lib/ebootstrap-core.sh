@@ -114,6 +114,17 @@ __eroot-repos-config() {
         awk -v EROOT="${EROOT}" -e '
             /^\[/ { print }
             /^location/ { print $1, $2, EROOT$3 }'
+
+    # To run emerge with --config-root, all of the repos used by the host
+    # profile must be defined in the target portage config, otherwise
+    # portage can't find the host profile.  Setting EBOOTSTRAP_PROFILE_REPOS
+    # ensures that the repo is added run emerge within ebootstrap.
+    for r in ${EBOOTSTRAP_PROFILE_REPOS}; do
+        if ! has ${r} $(PORTAGE_CONFIGROOT="${EROOT}" portageq get_repos /); then
+            echo "[${r}]"
+            echo "location = $(portageq get_repo_path / ${r})"
+        fi
+    done
 }
 
 ebootstrap-emerge() {
