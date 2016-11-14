@@ -77,7 +77,9 @@ location = ${tmp_overlay}
 
     /usr/bin/ebuild "${ebuild}" ${phase}
 
-    if [[ "${phase}" == "clean" && -n "${tmp_overlay}" ]]; then
+    if [[ "${phase}" == "clean" ]]; then
+        source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
+        ebootstrap-clean
         einfo Cleaning $tmp_overlay
         if [[ -d ${PORTAGE_TMPDIR}/tmp-overlay ]]; then
             rm -rf ${PORTAGE_TMPDIR}/tmp-overlay
