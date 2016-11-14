@@ -67,6 +67,10 @@ ebootstrap-fetch() {
     fi
 }
 
+var-expand() {
+    eval echo ${!1}
+}
+
 fstype() {
     local path="${1}"
 
@@ -184,6 +188,7 @@ ebootstrap-prepare() {
             else
                 # $v is a variable name reference
                 # expand $v to a LOCAL_ variable reference if necessary
+                [[ -z ${!v} ]] && continue
                 lv="LOCAL_${v/#E_/}"
                 [[ -z ${!lv} ]] && lv="${v}"
                 src="$(var-expand ${lv})"
@@ -193,6 +198,7 @@ ebootstrap-prepare() {
                 einfo "Creating mount point at ${EROOT}${dest}"
                 mkdir -p "${EROOT}${dest}"
             fi
+            einfo "mounting from ${src} to ${dest}"
             mount --bind "${src}" "${EROOT}${dest}" || die "Failed to mount ${dest}"
         done
         cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"

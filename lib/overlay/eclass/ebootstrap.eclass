@@ -36,7 +36,7 @@ fi
 
 S=${EROOT}
 
-EXPORT_FUNCTIONS pkg_info src_unpack src_configure src_install pkg_preinst
+EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_preinst
 
 #DEFAULT_REPO=${DEFAULT_REPO:-gentoo}
 : ${DEFAULT_REPO:=gentoo}
@@ -58,6 +58,10 @@ ebootstrap_src_unpack() {
 	[[ ${EROOT} == "/" ]] && die "ERROR: refusing to install into /"
 
 	ebootstrap-unpack ${DISTDIR}/${A}
+}
+
+ebootstrap_src_prepare() {
+	ebootstrap-prepare
 }
 
 ebootstrap_src_configure() {

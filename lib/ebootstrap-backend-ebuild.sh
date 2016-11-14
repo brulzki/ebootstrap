@@ -72,6 +72,8 @@ location = ${tmp_overlay}
 
     export EBOOTSTRAP_LIB
     export EBOOTSTRAP_BARE
+    export REPOPATH E_PKGDIR E_DISTDIR
+    export LOCAL_REPOPATH LOCAL_PKGDIR LOCAL_DISTDIR
 
     /usr/bin/ebuild "${ebuild}" ${phase}
 
