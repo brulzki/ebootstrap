@@ -12,10 +12,7 @@
 SYSTEM_REPOSITORIES="$(portageq repos_config /)"
 export PORTAGE_CONFIGROOT=${EBOOTSTRAP_LIB}
 export PORTDIR=${PORTAGE_CONFIGROOT}/overlay
-export PORTAGE_REPOSITORIES="${SYSTEM_REPOSITORIES}
-[ebootstrap]
-location = ${PORTDIR}
-"
+export PORTAGE_REPOSITORIES="${SYSTEM_REPOSITORIES}"
 
 if [[ ${UID} == 0 ]]; then
 	: ${PORTAGE_TMPDIR:=/var/tmp/ebootstrap}
@@ -33,8 +30,9 @@ copy-config-to-overlay() {
 
     # create the overlay structure and copy the config file
     mkdir -p $overlay/{metadata,profiles,ebootstrap}
-    echo "masters = ebootstrap" > ${overlay}/metadata/layout.conf
+    echo "masters = gentoo" > ${overlay}/metadata/layout.conf
     echo ebootstrap > $overlay/profiles/categories
+    echo ebootstrap > $overlay/profiles/arch.list
     local base=${config##*/}
     base=${base%.*}
     mkdir -p $overlay/ebootstrap/$base
@@ -59,7 +57,7 @@ ebootstrap-backend() {
 
         # add the overlay to repos.conf, otherwise ebuild tries
         # unsuccessfully to add it
-        PORTAGE_REPOSITORIES="${PORTAGE_REPOSITORIES}
+        PORTAGE_REPOSITORIES="${SYSTEM_REPOSITORIES}
 [tmp-overlay]
 location = ${tmp_overlay}
 "
