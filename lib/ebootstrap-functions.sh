@@ -216,9 +216,9 @@ ebootstrap-install() {
     # amd64 link from /lib->lib64 is created by baselayout
     # make sure this is done before merging other packages
     # (its probably bug is packages which install directly to /lib ?)
-    ebootstrap-emerge -1 baselayout
-    ebootstrap-emerge -1 @system
-    ebootstrap-emerge -1 @world
+    ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
+    ebootstrap-emerge -u1 @system || die "Failed merging @system"
+    ebootstrap-emerge -u1 @world || die "Failed merging @world"
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
