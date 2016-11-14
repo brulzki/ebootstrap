@@ -37,6 +37,20 @@ die() {
     exit 2
 }
 
+# has is copied from portage isolated-functions.sh
+# License: GPLv2
+__is_fn has || \
+has() {
+    local needle=$1
+    shift
+
+    local x
+    for x in "$@"; do
+        [ "${x}" = "${needle}" ] && return 0
+    done
+    return 1
+}
+
 # helper functions
 
 # Find the appropriate user config file path
