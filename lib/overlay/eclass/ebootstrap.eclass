@@ -36,13 +36,20 @@ fi
 
 S=${EROOT}
 
-EXPORT_FUNCTIONS pkg_info src_unpack src_configure pkg_preinst
+EXPORT_FUNCTIONS pkg_info src_unpack src_configure src_install pkg_preinst
 
 #DEFAULT_REPO=${DEFAULT_REPO:-gentoo}
 : ${DEFAULT_REPO:=gentoo}
 
 # load the ebootstrap library functions
 source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
+
+ebootstrap_pkg_info() {
+	echo EROOT=${EROOT}
+	echo "WORKDIR=${WORKDIR}"
+	echo "S=${S}"
+	echo "ARCH=${ARCH}"
+}
 
 ebootstrap_src_unpack() {
 	debug-print-function ${FUNCNAME} "${@}"
@@ -57,11 +64,15 @@ ebootstrap_src_configure() {
 	ebootstrap-configure
 }
 
-ebootstrap_pkg_info() {
-	echo EROOT=${EROOT}
-	echo "WORKDIR=${WORKDIR}"
-	echo "S=${S}"
-	echo "ARCH=${ARCH}"
+ebootstrap_src_install() {
+	if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
+		einfo "ebootstrap_src_install"
+		eerror "ebootstrap-install is not possible at this time"
+	fi
+	# ebootstrap-install fails because of the environment which is
+	# set up by portage; need to somehow reset the envionment and
+	# run the install in a subshell
+	#ebootstrap-install
 }
 
 ebootstrap_pkg_preinst() {

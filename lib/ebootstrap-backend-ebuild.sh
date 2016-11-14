@@ -9,12 +9,12 @@
 # place of the system configuration.
 
 # override the portage settings
+SYSTEM_REPOSITORIES="$(portageq repos_config /)"
 export PORTAGE_CONFIGROOT=${EBOOTSTRAP_LIB}
 export PORTDIR=${PORTAGE_CONFIGROOT}/overlay
-export PORTAGE_REPOSITORIES="[ebootstrap]
+export PORTAGE_REPOSITORIES="${SYSTEM_REPOSITORIES}
+[ebootstrap]
 location = ${PORTDIR}
-sync-type =
-sync-uri =
 "
 
 if [[ ${UID} == 0 ]]; then
@@ -32,7 +32,8 @@ copy-config-to-overlay() {
     local overlay="${1}" config="${2}"
 
     # create the overlay structure and copy the config file
-    mkdir -p $overlay/{profiles,ebootstrap}
+    mkdir -p $overlay/{metadata,profiles,ebootstrap}
+    echo "masters = ebootstrap" > ${overlay}/metadata/layout.conf
     echo ebootstrap > $overlay/profiles/categories
     local base=${config##*/}
     base=${base%.*}
@@ -56,12 +57,11 @@ ebootstrap-backend() {
         tmp_overlay=${PORTAGE_TMPDIR}/tmp-overlay
         ebuild=$(copy-config-to-overlay $tmp_overlay $ebuild)
 
-        # add the overlay ro repos.conf, otherwise ebuild tries
+        # add the overlay to repos.conf, otherwise ebuild tries
         # unsuccessfully to add it
-        PORTAGE_REPOSITORIES="${PORTAGE_REPOSITORIES}[tmp-overlay]
+        PORTAGE_REPOSITORIES="${PORTAGE_REPOSITORIES}
+[tmp-overlay]
 location = ${tmp_overlay}
-sync-type =
-sync-uri =
 "
     fi
 
@@ -71,6 +71,7 @@ sync-uri =
     export ROOT=${EROOT}
 
     export EBOOTSTRAP_LIB
+    export EBOOTSTRAP_BARE
 
     /usr/bin/ebuild "${ebuild}" ${phase}
 
