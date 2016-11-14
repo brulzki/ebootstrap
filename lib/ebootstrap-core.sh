@@ -9,7 +9,7 @@
 
 if [[ ! ${_EBOOTSTRAP_CORE} ]]; then
 
-: ${EMERGE_OPTS:="--ask --verbose"}
+: ${EMERGE_OPTS:="--quiet"}
 
 __is_fn() {
     #declare -f "${1}" > /dev/null
