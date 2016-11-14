@@ -90,7 +90,7 @@ create-root() {
     fi
 }
 
-ebootstrap-init-bare() {
+ebootstrap-init-rootfs() {
     debug-print-function ${FUNCNAME} "${@}"
 
     # catalyst creates a bunch of .keep files around the place... I guess I should too
@@ -174,7 +174,7 @@ ebootstrap-prepare() {
 
     if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
         einfo ">>> Initialising bare rootfs in ${EROOT}"
-        ebootstrap-init-bare
+        ebootstrap-init-rootfs
     fi
 
     if [[ $UID == 0 ]]; then
