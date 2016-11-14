@@ -69,10 +69,6 @@ ebootstrap-backend () {
         clean)
             phases="clean"
             ;;
-        merge)
-            phases="fetch unpack prepare configure install config clean"
-            einfo "Installing to ${EROOT}"
-            ;;
         *)
             eerror "Invalid command: ${command}" && false
             ;;

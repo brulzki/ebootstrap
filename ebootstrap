@@ -104,12 +104,12 @@ if [[ __args == 2 || -n ${2} ]]; then
 fi
 unset __args
 
-action=${action:-merge}
+action=${action:-install}
 
 case ${action} in
     info|fetch|unpack|prepare|clean)
         ;;
-    install|merge)
+    install)
         einfo "Installing into ${EROOT}"
         ;;
     configure|config)
