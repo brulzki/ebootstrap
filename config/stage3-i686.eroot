@@ -1,5 +1,13 @@
+# Copyright (c) 2016-2017 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
 
-SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/20160223/stage3-i686-20160223.tar.bz2"
+EAPI=5
+
+inherit ebootstrap
+
+SLOT=0
+
+SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/20170103/stage3-i686-20170103.tar.bz2"
 
 E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default"
 
