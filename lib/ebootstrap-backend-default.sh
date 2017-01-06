@@ -12,9 +12,16 @@ inherit() {
     :
 }
 
+debug-print() {
+    # adapted from portage ebuild.sh
+    if [[ ${ECLASS_DEBUG_OUTPUT-on} == on ]]; then
+        printf 'debug: %s\n' "${@}" >&2
+    fi
+}
+
 debug-print-function() {
     # adapted from portage ebuild.sh
-    echo "${1}: entering function, parameters ${*:2}"
+    debug-print "${1}: entering function, parameters ${*:2}"
 }
 
 ebootstrap-backend () {
