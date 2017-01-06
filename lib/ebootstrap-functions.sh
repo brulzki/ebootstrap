@@ -129,22 +129,30 @@ ebootstrap-unpack() {
     # unpack the source archive into ${EROOT}
     debug-print-function ${FUNCNAME} "${@}"
 
-    local A="$1"
-
     [[ ${EROOT} == "/" ]] && dir "ERROR: refusing to install into \"/\""
 
     if [[ ! -d ${EROOT} ]]; then
-        create-root ${EROOT} || die "Failed creating rootfs: ${EROOT}"
+        create-root "${EROOT}" || die "Failed creating rootfs: ${EROOT}"
     fi
 
     # test that the target directory is empty
-    [[ "$(ls -A ${EROOT})" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
+    [[ "$(ls -A "${EROOT}")" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
-    if [[ ${EBOOTSTRAP_BARE} != 1 ]]; then
-        # don't use unpack; the handbook requires using the tar -p option
-        einfo ">>> Unpacking ${A} into ${EROOT}"
-        tar -xopf ${A} -C ${EROOT} || die "Failed extracting ${A}"
-    fi
+    # skip unpack step for bare install if no args were given
+    [[ $# == 0 && ${EBOOTSTRAP_BARE} == 1 ]] && return 0
+
+    # if args were passed in, put them into local $SRC_URI
+    [[ $# > 0 ]] && local A=$(printf "%s\n" "$@")
+
+    debug-print "A=\"${A}\""
+
+    for f in ${A}; do
+        # skip empty lines
+        [[ -z ${f} ]] && continue
+        # don't use portage unpack(); the handbook requires using the tar -p option
+        einfo ">>> Unpacking ${f} into ${EROOT}"
+        tar -xpf "${DISTDIR}/${f}" -C "${EROOT}" || die "Failed extracting ${f}"
+    done
 }
 
 ebootstrap-unpack-alt() {
