@@ -223,6 +223,9 @@ ebootstrap-install() {
     # make sure this is done before merging other packages
     # (its probably bug is packages which install directly to /lib ?)
     ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
+    # tmp permissions should probably be managed by baselayout
+    [[ -d "${EROOT}/tmp" ]] && chmod 1777 "${EROOT}/tmp"
+    [[ -d "${EROOT}/var/tmp" ]] && chmod 1777 "${EROOT}/var/tmp"
     ebootstrap-emerge -u1 @system || die "Failed merging @system"
     ebootstrap-emerge -u1 @world || die "Failed merging @world"
 
