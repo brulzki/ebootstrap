@@ -58,13 +58,24 @@ ebootstrap-fetch() {
     # fetch the source archive
     debug-print-function ${FUNCNAME} "${@}"
 
-    local src_uri="${1}"
-    local A=${src_uri##*/}
+    # skip fetch step for bare install if no args were given
+    [[ $# == 0 && ${EBOOTSTRAP_BARE} == 1 ]] && return 0
 
-    if [[ $EBOOTSTRAP_FORCE == 1 || ! -f ${DISTDIR}/${A} ]]; then
-        einfo "Fetching ${src_uri}"
-        wget ${src_uri} -O ${DISTDIR}/${A}
-    fi
+    # if args were passed in, put them into local $SRC_URI
+    [[ $# > 0 ]] && local SRC_URI=$(printf "%s\n" "$@")
+
+    debug-print "SRC_URI=\"${SRC_URI}\""
+
+    while read src; do
+        # skip empty lines
+        [[ -z ${src} ]] && continue
+        local dest="${src##*/}"
+        debug-print "$src -> $dest"
+        if [[ $EBOOTSTRAP_FORCE == 1 || ! -f "${DISTDIR}/${dest}" ]]; then
+            einfo "Fetching ${src}"
+            wget "${src}" -O "${DISTDIR}/${dest}"
+        fi
+    done < <( echo "${SRC_URI}" )
 }
 
 var-expand() {
