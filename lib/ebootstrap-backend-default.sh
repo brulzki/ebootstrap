@@ -35,7 +35,12 @@ ebootstrap-backend () {
     export ROOT=${EROOT}
 
     # internal portage-type variables... may be used in ebootstrap-functions
-    A=${SRC_URI##*/}
+    local dest=()
+    while read src; do
+        dest+=(${src##*/})
+    done < <( echo "${SRC_URI}" )
+    A=$(IFS=' '; echo "${dest[*]}")
+    unset dest
     P=${config##*/}
     PN=${P%.*}
 
@@ -83,14 +88,7 @@ ebootstrap-backend () {
 
     for action in ${phases}; do
         case ${action} in
-            fetch)
-                #einfo "Fetching"
-                ebootstrap-fetch ${SRC_URI}
-                ;;
-            unpack)
-                ebootstrap-unpack ${DISTDIR}/${A}
-                ;;
-            clean)
+            fetch|unpack|clean)
                 # do not need to track the state of these actions
                 ebootstrap-${action}
                 ;;

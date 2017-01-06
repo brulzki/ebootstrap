@@ -57,7 +57,7 @@ ebootstrap_src_unpack() {
 	# this is also checked in ebootstrap-unpack, but we want to be sure
 	[[ ${EROOT} == "/" ]] && die "ERROR: refusing to install into /"
 
-	ebootstrap-unpack ${DISTDIR}/${A}
+	ebootstrap-unpack
 }
 
 ebootstrap_src_prepare() {
