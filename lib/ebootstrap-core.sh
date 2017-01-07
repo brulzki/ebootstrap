@@ -18,17 +18,17 @@ __is_fn() {
 
 __is_fn einfo || \
 einfo() {
-    echo "$@"
+    echo "$@" >&2
 }
 
 __is_fn ewarn || \
 ewarn() {
-    echo "$@"
+    echo "$@" >&2
 }
 
 __is_fn eerror || \
 eerror() {
-    echo "$@"
+    echo "$@" >&2
 }
 
 __is_fn die || \
