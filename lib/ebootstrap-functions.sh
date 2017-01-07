@@ -64,9 +64,14 @@ get-stage3-uri() {
         cache_age=$(( ($(date +%s) - $(stat -c %Y "${dest}")) / 86400 ))
     fi
 
-    if [[ ! -f "${dest}" || ${cache_age} > 14 ]]; then
+    # cache the latest-stage3 file for 14 days before trying to download again
+    if [[ ! -f "${dest}" || ${cache_age} > 14 || $EBOOTSTRAP_FORCE == 1 ]]; then
         ewarn "Fetching ${src}"
-        wget -N "${src}" -P "${DISTDIR}" && touch "${dest}"
+        # we use -N here to overwrite the existing file, but we touch
+        # the file timestamp if the download was successful rather than
+        # keeping the http file timestamp
+        #wget -N "${src}" -P "${DISTDIR}" >&2 && touch "${dest}"
+        wget --no-use-server-timestamps "${src}" -O "${dest}" >&2
     fi
     local stage3_latest=$(tail -n1 "${dest}" | cut -d' ' -f1)
 
