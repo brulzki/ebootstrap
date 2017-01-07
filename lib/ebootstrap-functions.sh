@@ -54,6 +54,25 @@
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
+get-stage3-uri() {
+    debug-print-function ${FUNCNAME} "${@}"
+
+    local src="${1}" dest="${DISTDIR}/${1##*/}"
+    local cache_age=0
+
+    if [[ -f "${dest}" ]]; then
+        cache_age=$(( ($(date +%s) - $(stat -c %Y "${dest}")) / 86400 ))
+    fi
+
+    if [[ ! -f "${dest}" || ${cache_age} > 14 ]]; then
+        ewarn "Fetching ${src}"
+        wget -N "${src}" -P "${DISTDIR}" && touch "${dest}"
+    fi
+    local stage3_latest=$(tail -n1 "${dest}" | cut -d' ' -f1)
+
+    echo "${src%/*}/${stage3_latest}"
+}
+
 ebootstrap-fetch() {
     # fetch the source archive
     debug-print-function ${FUNCNAME} "${@}"
@@ -69,6 +88,7 @@ ebootstrap-fetch() {
     while read src; do
         # skip empty lines
         [[ -z ${src} ]] && continue
+        [[ ${src##*/} == latest-stage3-*.txt ]] && src=$(get-stage3-uri "${src}")
         local dest="${src##*/}"
         debug-print "$src -> $dest"
         if [[ $EBOOTSTRAP_FORCE == 1 || ! -f "${DISTDIR}/${dest}" ]]; then

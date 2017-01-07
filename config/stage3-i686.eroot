@@ -5,15 +5,17 @@ EAPI=5
 
 inherit ebootstrap
 
-SLOT=0
+DESCRIPTION="Gentoo linux (x86)"
+HOMEPAGE="http://gentoo.org"
+SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/latest-stage3-i686.txt"
 
-SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/20170103/stage3-i686-20170103.tar.bz2"
+SLOT=0
 
 E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default"
 
 E_PROFILE="gentoo:default/linux/x86/13.0"
 
-E_PKGDIR="/var/cache/packages.d/stage3-i686"
+E_PKGDIR="/var/cache/packages/stage3-i686"
 
 E_MAKE_CONF="
 	USE=bindist
