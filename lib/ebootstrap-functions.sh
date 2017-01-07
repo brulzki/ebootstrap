@@ -110,18 +110,23 @@ ebootstrap-init-rootfs() {
                     var/lib var/log var/spool var/tmp"
 
     for d in $rootdirs; do
-        mkdir -p ${EROOT}/${d} && \
-        touch ${EROOT}/${d}/.keep
+        mkdir -p "${EROOT}/${d}" && \
+        touch "${EROOT}/${d}/.keep"
     done
+
+    # set permissions of applicable directories
+    # (normally done by the bootstrap ebuild with USE=build)
+    chmod 700 "${EROOT}/root"
+    chmod 1777 "${EROOT}/tmp" "${EROOT}/var/tmp"
 
     # create the minimal devices required to boot (with hotplugging)
     if [ $UID == 0 ]; then
-        mknod ${EROOT}/dev/console c 5 1
-        mknod ${EROOT}/dev/null    c 1 3
-        mknod ${EROOT}/dev/ptmx    c 4 2
-        mknod ${EROOT}/dev/ram0    b 1 0
-        mknod ${EROOT}/dev/tty0    c 5 0
-        mknod ${EROOT}/dev/ttyS0   c 4 64
+        mknod "${EROOT}/dev/console" c 5 1
+        mknod "${EROOT}/dev/null"    c 1 3
+        mknod "${EROOT}/dev/ptmx"    c 4 2
+        mknod "${EROOT}/dev/ram0"    b 1 0
+        mknod "${EROOT}/dev/tty0"    c 5 0
+        mknod "${EROOT}/dev/ttyS0"   c 4 64
     fi
 }
 
@@ -242,9 +247,6 @@ ebootstrap-install() {
     # make sure this is done before merging other packages
     # (its probably bug is packages which install directly to /lib ?)
     ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
-    # tmp permissions should probably be managed by baselayout
-    [[ -d "${EROOT}/tmp" ]] && chmod 1777 "${EROOT}/tmp"
-    [[ -d "${EROOT}/var/tmp" ]] && chmod 1777 "${EROOT}/var/tmp"
     ebootstrap-emerge -u1 @system || die "Failed merging @system"
     ebootstrap-emerge -u1 @world || die "Failed merging @world"
 
