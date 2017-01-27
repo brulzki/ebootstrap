@@ -12,8 +12,8 @@ if [[ ! ${_EBOOTSTRAP_CORE} ]]; then
 : ${EMERGE_OPTS:="--quiet"}
 
 __is_fn() {
-    #declare -f "${1}" > /dev/null
-    type -f "${1}" > /dev/null 2>&1
+    #type -t "${1}" > /dev/null 2>&1
+    declare -f "${1}" > /dev/null
 }
 
 __is_fn einfo || \
