@@ -247,7 +247,7 @@ ebootstrap-prepare() {
                 einfo "Creating mount point at ${EROOT}${dest}"
                 mkdir -p "${EROOT}${dest}"
             fi
-            einfo "mounting from ${src} to ${dest}"
+            einfo "mounting from ${src} to ${EROOT}${dest}"
             mount --bind "${src}" "${EROOT}${dest}" || die "Failed to mount ${dest}"
         done
         cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
