@@ -455,14 +455,14 @@ preprocess-make-conf-vars() {
 
 ebootstrap-configure-repos() {
     if [[ -n "${E_REPOS}" ]]; then
-        echo "Configuring /etc/portage/repos.conf"
+        einfo "Configuring /etc/portage/repos.conf"
         set-repos-conf "${E_REPOS}"
     fi
 }
 
 ebootstrap-configure-profile() {
     if [[ -n "${E_PROFILE}" ]]; then
-        echo "Setting make.profile to ${E_PROFILE}"
+        einfo "Setting make.profile to ${E_PROFILE}"
         set_profile "${E_PROFILE}"
     fi
 }
@@ -501,7 +501,7 @@ ebootstrap-configure-make-conf() {
     fi
 
     if [[ -n "${E_PORTDIR}" ]]; then
-        echo "Setting make.conf PORTDIR to ${E_PORTDIR}"
+        einfo "Setting make.conf PORTDIR to ${E_PORTDIR}"
         if grep -q "^PORTDIR=" ${MAKE_CONF}; then
             sed -i "s!^PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${MAKE_CONF}
         else
@@ -511,7 +511,7 @@ ebootstrap-configure-make-conf() {
     fi
 
     if [[ -n "${E_DISTDIR}" ]]; then
-        echo "Setting make.conf DISTDIR to ${E_DISTDIR}"
+        einfo "Setting make.conf DISTDIR to ${E_DISTDIR}"
         if grep -q "^DISTDIR=" ${MAKE_CONF}; then
             sed -i "s!^DISTDIR=.*!DISTDIR=\"${E_DISTDIR}\"!" ${MAKE_CONF}
         else
@@ -521,7 +521,7 @@ ebootstrap-configure-make-conf() {
     fi
 
     if [[ -n "${E_PKGDIR}" ]]; then
-        echo "Setting make.conf PKGDIR to ${E_PKGDIR}"
+        einfo "Setting make.conf PKGDIR to ${E_PKGDIR}"
         if grep -q "^PKGDIR=" ${MAKE_CONF}; then
             sed -i "s!^PKGDIR=.*!PKGDIR=\"${E_PKGDIR}\"!" ${MAKE_CONF}
         else
@@ -562,7 +562,7 @@ ebootstrap-configure-portage() {
 ebootstrap-configure-system() {
     # timezone
     if [[ -n "${TIMEZONE}" ]]; then
-        echo "Setting timezone to ${TIMEZONE}"
+        einfo "Setting timezone to ${TIMEZONE}"
         echo "${TIMEZONE}" > ${EROOT}/etc/timezone
         if [[ -e ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ]]; then
             cp ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ${EROOT}/etc/localtime
@@ -571,7 +571,7 @@ ebootstrap-configure-system() {
 
     # /etc/locale.gen
     if [[ -n "${LOCALE_GEN}" ]]; then
-        echo "Configuring /etc/locale.gen"
+        einfo "Configuring /etc/locale.gen"
         # strip any inital commented locales
         sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen
         printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/locale.gen
