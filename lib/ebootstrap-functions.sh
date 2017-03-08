@@ -51,6 +51,8 @@
 #               of locales to append to the file
 #               eg LOCALE_GEN="en_AU.UTF-8 en_AU.ISO-8859-1"
 #               (note the use of the '.' in each locale)
+#
+# E_HOSTNAME  - hostname of the target system
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
@@ -559,6 +561,12 @@ ebootstrap-configure-portage() {
     ebootstrap-configure-package-files
 }
 
+set-hostname() {
+    if [[ -n "${E_HOSTNAME}" ]]; then
+        sed -e "s/hostname=\".*\"/hostname=\"${E_HOSTNAME}\"/" "${EROOT}/etc/conf.d/hostname" > "${EROOT}/etc/conf.d/._cfg0000_hostname"
+    fi
+}
+
 ebootstrap-configure-system() {
     # timezone
     if [[ -n "${TIMEZONE}" ]]; then
@@ -575,6 +583,12 @@ ebootstrap-configure-system() {
         # strip any inital commented locales
         sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen
         printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/locale.gen
+    fi
+
+    # hostname
+    if [[ -n "${E_HOSTNAME}" ]]; then
+        einfo "Setting hostname to ${E_HOSTNAME}"
+        sed -i "s/hostname=\".*\"/hostname=\"${E_HOSTNAME}\"/" "${EROOT}/etc/conf.d/hostname"
     fi
 }
 
