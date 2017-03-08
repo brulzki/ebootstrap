@@ -53,6 +53,10 @@
 #               (note the use of the '.' in each locale)
 #
 # E_HOSTNAME  - hostname of the target system
+#
+# E_PACKAGES  - array of package atoms which are to be installed
+#
+# E_SERVICES  - services to start in the default runlevel
 
 if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 
@@ -263,6 +267,27 @@ ebootstrap-prepare() {
     mkdir -p ${EROOT}/boot/efi
 }
 
+ebootstrap-chroot() {
+    # TODO check the mounts are set up
+    [[ -z "${EROOT}" ]] && return
+    /usr/bin/chroot "${EROOT}" "$@"
+}
+
+ebootstrap-rc-update() {
+    # (could link /etc/runlevels/default/ -> /etc/init.d/<service> ??)
+    ebootstrap-chroot rc-update "$@"
+}
+
+install-packages() {
+    einfo "Instaling packages: ${E_PACKAGES[@]}"
+    if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
+        #ebootstrap-emerge -au "${E_PACKAGES[@]}"
+        # XXX: using ebootstrap-emerge here fails because the enewuser function
+        # creates users in the host system only, not in the $EROOT system
+        ebootstrap-chroot FEATURES="-news" emerge -u "${EMERGE_OPTS}" "${E_PACKAGES[@]}"
+    fi
+}
+
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
 
@@ -279,6 +304,15 @@ ebootstrap-install() {
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
+
+    # packages
+    install-packages
+
+    # default services
+    for s in ${E_SERVICES}; do
+        einfo "Adding ${s} to default runlevel"
+        ebootstrap-rc-update add "${s}" default
+    done
 }
 
 # relative_name taken from /usr/share/eselect/libs/path-manipulation.bash
