@@ -14,7 +14,7 @@ if [[ ! ${_DUMMY} ]]; then
 for _f in pkg_pretend pkg_nofetch pkg_setup src_unpack src_prepare \
 	  src_configure src_compile src_test src_install \
 	  pkg_preinst pkg_postinst pkg_prerm pkg_postrm pkg_config; do
-	eval "dummy_${_f}() { 
+	eval "dummy_${_f}() {
 		ewarn \"${_f}()\"
 		einfo \"PWD=\${PWD}\"
 		einfo \"S=\${S}\"
@@ -22,6 +22,7 @@ for _f in pkg_pretend pkg_nofetch pkg_setup src_unpack src_prepare \
 		einfo \"ROOT=\${ROOT}\"
 		einfo \"EROOT=\${EROOT}\"
 		[[ \${FUNCNAME} == dummy_src_unpack ]] && mkdir -p \${S};
+		return 0
 	}"
 	EXPORT_FUNCTIONS ${_f}
 done
