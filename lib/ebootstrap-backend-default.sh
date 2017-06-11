@@ -6,10 +6,77 @@
 # This is the default backend which implements the install phases
 # internally.
 
-source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
+# inherit() and EXPORT_FUNCTIONS() adapted from portage ebuild.sh
+# Copyright 1999-2015 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
 
+# Sources all eclasses in parameters
+declare -ix ECLASS_DEPTH=0
 inherit() {
-    :
+    ECLASS_DEPTH=$(($ECLASS_DEPTH + 1))
+    if [[ ${ECLASS_DEPTH} > 1 ]]; then
+        debug-print "*** Multiple Inheritence (Level: ${ECLASS_DEPTH})"
+    fi
+
+    local location
+    local potential_location
+
+    # These variables must be restored before returning.
+    local PECLASS=$ECLASS
+    local prev_export_funcs_var=$__export_funcs_var
+
+    while [ "$1" ]; do
+        location=""
+        potential_location=""
+
+        export ECLASS="$1"
+        __export_funcs_var=__export_functions_$ECLASS_DEPTH
+        unset $__export_funcs_var
+
+        potential_location="${EBOOTSTRAP_LIB}/${1}.eclass"
+        debug-print "${potential_location}"
+        if [[ -f ${potential_location} ]]; then
+            location="${potential_location}"
+            debug-print "  eclass exists: ${location}"
+        fi
+        debug-print "inherit: $1 -> ${location}"
+        [[ -z "${location}" ]] && die "ERROR: ${1}.eclass could not be found by inherit()"
+
+        source "${location}" || die "died sourcing $location in inherit()"
+
+        if [[ -z ${_IN_INSTALL_QA_CHECK} ]]; then
+            # define the exported functions
+            if [[ -n ${!__export_funcs_var} ]] ; then
+                for x in ${!__export_funcs_var} ; do
+                    debug-print "EXPORT_FUNCTIONS: $x -> ${ECLASS}_$x"
+                    declare -F "${ECLASS}_$x" >/dev/null || \
+                        die "EXPORT_FUNCTIONS: ${ECLASS}_$x is not defined"
+                    eval "$x() { ${ECLASS}_$x \"\$@\" ; }" > /dev/null
+                done
+            fi
+            unset $__export_funcs_var
+        fi
+        shift
+    done
+    ((--ECLASS_DEPTH)) # Returns 1 when ECLASS_DEPTH reaches 0.
+    if (( ECLASS_DEPTH > 0 )) ; then
+        export ECLASS=$PECLASS
+        __export_funcs_var=$prev_export_funcs_var
+    else
+        unset ECLASS __export_funcs_var
+    fi
+    return 0
+}
+
+# Exports stub functions that call the eclass's functions, thereby making them default.
+# For example, if ECLASS="base" and you call "EXPORT_FUNCTIONS src_unpack", the following
+# code will be eval'd:
+# src_unpack() { base_src_unpack; }
+EXPORT_FUNCTIONS() {
+    if [ -z "$ECLASS" ]; then
+        die "EXPORT_FUNCTIONS without a defined ECLASS"
+    fi
+    eval $__export_funcs_var+=\" $*\"
 }
 
 debug-print() {
@@ -25,6 +92,8 @@ debug-print-function() {
 }
 
 ebootstrap-backend () {
+    debug-print-function ${FUNCNAME} "${@}"
+
     local command="${1}" config="${2}" phases phase
 
     # load the config file
@@ -53,7 +122,7 @@ ebootstrap-backend () {
 
     case $command in
         info)
-            ebootstrap-info
+            phases="info"
             ;;
         fetch)
             phases="fetch"
@@ -85,11 +154,22 @@ ebootstrap-backend () {
             ;;
     esac
 
+    debug-print "phases=${phases}"
     for action in ${phases}; do
+        debug-print ">>> executing phase: ${action}"
         case ${action} in
-            fetch|unpack|clean)
+            info|config)
+                # call the phase_func appropriate for the action
+                pkg_${action}
+                ;;
+            fetch|clean)
                 # do not need to track the state of these actions
+                # there is no phase_func for these actions
                 ebootstrap-${action}
+                ;;
+            unpack)
+                # do not need to track the state of these actions
+                src_${action}
                 ;;
             *)
                 # execute the current action if it has not already completed successfully
@@ -97,11 +177,12 @@ ebootstrap-backend () {
                 mkdir -p "${EROOT}/var/tmp/ebootstrap"
                 if [[ ! -f "${EROOT}/var/tmp/ebootstrap/${action}" ]]; then
                     einfo ">>> ebootstrap phase: ${action}"
-                    ebootstrap-${action}
+                    src_${action}
                     if [[ $? == 0 ]]; then
                         touch "${EROOT}/var/tmp/ebootstrap/${action}"
                     else
                         # don't process any further phases
+                        debug-print "ERROR executing phase ${action}"
                         break
                     fi
                 fi
