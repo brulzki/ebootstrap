@@ -1,4 +1,4 @@
-# Copyright (c) 2015,2016 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2015-2017 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
 # Author: Bruce Schultz <brulzki@gmail.com>
@@ -48,11 +48,12 @@ copy-config-to-overlay() {
 
 ebootstrap-backend() {
     local phase=$1 ebuild="${2}"
+    export config="${ebuild}"
 
     if [[ "${ebuild##*.}" != "ebuild" ]]; then
         # ebuild expects the config to be an ebuild file in a proper overlay structure
         # so make a temporary copy if necessary
-        tmp_overlay=${PORTAGE_TMPDIR}/tmp-overlay
+        local tmp_overlay=${PORTAGE_TMPDIR}/tmp-overlay
         ebuild=$(copy-config-to-overlay $tmp_overlay $ebuild)
 
         # add the overlay to repos.conf, otherwise ebuild tries
@@ -73,14 +74,14 @@ location = ${tmp_overlay}
     export REPOPATH E_PKGDIR E_DISTDIR
     export LOCAL_REPOPATH LOCAL_PKGDIR LOCAL_DISTDIR
 
-    /usr/bin/ebuild "${ebuild}" ${phase}
+    /usr/bin/ebuild --skip-manifest "${ebuild}" ${phase}
 
     if [[ "${phase}" == "clean" ]]; then
         source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
         ebootstrap-clean
         einfo Cleaning $tmp_overlay
-        if [[ -d ${PORTAGE_TMPDIR}/tmp-overlay ]]; then
-            rm -rf ${PORTAGE_TMPDIR}/tmp-overlay
+        if [[ -d ${tmp-overlay} ]]; then
+            rm -rf ${tmp-overlay}
         fi
     fi
 }
