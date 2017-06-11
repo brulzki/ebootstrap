@@ -185,6 +185,10 @@ ebootstrap-unpack() {
     for f in ${A}; do
         # skip empty lines
         [[ -z ${f} ]] && continue
+        [[ ${f##*/} == latest-stage3-*.txt ]] && {
+            f=$(get-stage3-uri "${f}")
+            f=${f##*/}
+        }
         # don't use portage unpack(); the handbook requires using the tar -p option
         einfo ">>> Unpacking ${f} into ${EROOT}"
         tar -xpf "${DISTDIR}/${f}" -C "${EROOT}" || die "Failed extracting ${f}"
