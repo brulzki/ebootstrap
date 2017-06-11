@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2015-2017 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
 # @ECLASS: ebootstrap
@@ -45,10 +45,7 @@ EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_p
 source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
 
 ebootstrap_pkg_info() {
-	echo EROOT=${EROOT}
-	echo "WORKDIR=${WORKDIR}"
-	echo "S=${S}"
-	echo "ARCH=${ARCH}"
+	ebootstrap-info
 }
 
 ebootstrap_src_unpack() {

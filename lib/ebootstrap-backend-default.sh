@@ -1,4 +1,4 @@
-# Copyright (c) 2015,2016 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2015-2017 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
 # Author: Bruce Schultz <brulzki@gmail.com>
@@ -53,8 +53,7 @@ ebootstrap-backend () {
 
     case $command in
         info)
-            einfo config=${config}
-            einfo EROOT=${EROOT}
+            ebootstrap-info
             ;;
         fetch)
             phases="fetch"

@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2015-2017 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
 # @AUTHOR:
@@ -82,6 +82,18 @@ get-stage3-uri() {
     local stage3_latest=$(tail -n1 "${dest}" | cut -d' ' -f1)
 
     echo "${src%/*}/${stage3_latest}"
+}
+
+ebootstrap-info() {
+    einfo "config=${config}"
+    einfo "DESCRIPTION=${DESCRIPTION}"
+    einfo "EROOT=${EROOT}"
+    einfo "ARCH=${ARCH}"
+    einfo "SRC_URI=${SRC_URI}"
+    einfo "P=${P}"
+    einfo "PN=${PN}"
+    einfo "A=${A}"
+    einfo "S=${S}"
 }
 
 ebootstrap-fetch() {
