@@ -136,6 +136,9 @@ create-root() {
 
     local path=$(readlink -m "${1}")
 
+    # ensure the parent directory is created first so that the btrfs test works
+    mkdir -p "${path%/*}" || return -1
+
     if [[ $UID == 0 && $(fstype "${path%/*}") == "btrfs" ]]; then
         einfo "Creating btrfs subvolume ${path}"
         btrfs subvolume create "${path}"
