@@ -40,7 +40,7 @@ copy-config-to-overlay() {
 
     # FIXME: why doesn't ebuild inherit from the ebootstrap overlay here?
     mkdir -p $overlay/eclass
-    cp ${EBOOTSTRAP_LIB}/overlay/eclass/ebootstrap.eclass $overlay/eclass
+    cp ${EBOOTSTRAP_LIB}/*.eclass $overlay/eclass
 
     # the new ebuild filename can be slurped out by the caller
     echo $overlay/ebootstrap/$base/$base-9999.ebuild
