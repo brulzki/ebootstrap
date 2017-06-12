@@ -5,17 +5,17 @@ EAPI=5
 
 inherit ebootstrap
 
-DESCRIPTION="Gentoo linux (x86)"
+DESCRIPTION="Gentoo linux stage3"
 HOMEPAGE="http://gentoo.org"
-SRC_URI="http://distfiles.gentoo.org/releases/x86/autobuilds/latest-stage3-i686.txt"
+SRC_URI="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/latest-stage3-${STAGE3_ARCH}.txt"
 
 SLOT=0
 
 E_REPOS="gentoo rsync://rsync.gentoo.org/gentoo-portage default"
 
-E_PROFILE="gentoo:default/linux/x86/13.0"
+E_PROFILE="gentoo:default/linux/${ARCH}/13.0"
 
-E_PKGDIR="/var/cache/packages/stage3-i686"
+E_PKGDIR="/var/cache/packages/${PN}-${ARCH}"
 
 E_MAKE_CONF="
 	USE=bindist
@@ -25,5 +25,5 @@ E_MAKE_CONF="
 
 	FEATURES=getbinpkg
 	EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
-	PORTAGE_BINHOST=http://binpkg.example.com/packages/stage3-i686
+	PORTAGE_BINHOST=http://binpkg.example.com/packages/${PN}-${ARCH}
 "

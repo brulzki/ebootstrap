@@ -44,6 +44,17 @@ EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_p
 # load the ebootstrap library functions
 source ${EBOOTSTRAP_LIB}/ebootstrap-functions.sh
 
+# STAGE3_ARCH
+# this is used to identify the stage3 download
+case "${ARCH}" in
+	x86)
+		STAGE3_ARCH="i686"
+		;;
+	*)
+		STAGE3_ARCH="${ARCH}"
+		;;
+esac
+
 ebootstrap_pkg_info() {
 	ebootstrap-info
 }
