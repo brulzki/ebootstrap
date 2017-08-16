@@ -49,14 +49,17 @@ Options:
 
   --force
           Try harder to do something that would otherwise fail
+
+  --hostname (-h)
+          Sets a hostname which may be used in the installation process.
 EOF
 }
 
 load-global-config
 
 # command line parsing
-SHORT_OPTS=""
-LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,features:,force,bare,help"
+SHORT_OPTS="h:"
+LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,features:,force,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -83,6 +86,10 @@ while true; do
             ;;
         --bare)
             EBOOTSTRAP_FEATURES+=( bare )
+            ;;
+        -h|--hostname)
+            export E_HOSTNAME="${2}"
+            shift
             ;;
         --help)
             usage --long
