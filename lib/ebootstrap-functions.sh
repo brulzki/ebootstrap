@@ -246,7 +246,7 @@ ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
 
-    if has bare ${EBOOTSTRAP_FEATURES}; then
+    if has bare ${EBOOTSTRAP_FEATURES} && [[ ! -d "${EROOT}/dev" ]]; then
         einfo ">>> Initialising bare rootfs in ${EROOT}"
         ebootstrap-init-rootfs
     fi
@@ -267,6 +267,10 @@ ebootstrap-prepare() {
                 [[ -z ${!lv} ]] && lv="${v}"
                 src="$(var-expand ${lv})"
                 dest="$(var-expand ${v})"
+            fi
+            if grep -q " ${EROOT}${dest} " /proc/mounts; then
+                # already mounted - assume its correct
+                continue
             fi
             if [[ ! -d "${EROOT}${dest}" ]]; then
                 einfo "Creating mount point at ${EROOT}${dest}"

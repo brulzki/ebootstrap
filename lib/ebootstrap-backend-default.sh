@@ -178,18 +178,16 @@ ebootstrap-backend () {
                 # there is no phase_func for these actions
                 ebootstrap-${action}
                 ;;
-            unpack)
-                # do not need to track the state of these actions
-                src_${action}
-                ;;
             *)
                 # execute the current action if it has not already completed successfully
-                [[ -d "${EROOT}" ]] || die "Invalid EROOT ${EROOT} (${action})"
-                mkdir -p "${EROOT}/var/tmp/ebootstrap"
-                if [[ ! -f "${EROOT}/var/tmp/ebootstrap/${action}" ]]; then
+                if [[ ${action} != unpack && ! -d "${EROOT}" ]]; then
+                    die "Invalid EROOT ${EROOT} (${action})"
+                fi
+                if [[ ${action} == prepare || ! -f "${EROOT}/var/tmp/ebootstrap/${action}" ]]; then
                     einfo ">>> ebootstrap phase: ${action}"
                     src_${action}
                     if [[ $? == 0 ]]; then
+                        mkdir -p "${EROOT}/var/tmp/ebootstrap"
                         touch "${EROOT}/var/tmp/ebootstrap/${action}"
                     else
                         # don't process any further phases
