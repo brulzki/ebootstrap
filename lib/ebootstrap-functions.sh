@@ -296,19 +296,14 @@ ebootstrap-chroot() {
     /usr/bin/chroot "${EROOT}" "$@"
 }
 
+ebootstrap-chroot-emerge() {
+    ebootstrap-chroot /usr/bin/env --unset=ROOT --unset=EROOT FEATURES="-news" \
+        /usr/bin/emerge ${EMERGE_OPTS} --root=/ "$@"
+}
+
 ebootstrap-rc-update() {
     # (could link /etc/runlevels/default/ -> /etc/init.d/<service> ??)
     ebootstrap-chroot rc-update "$@"
-}
-
-install-packages() {
-    einfo "Instaling packages: ${E_PACKAGES[@]}"
-    if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
-        #ebootstrap-emerge -au "${E_PACKAGES[@]}"
-        # XXX: using ebootstrap-emerge here fails because the enewuser function
-        # creates users in the host system only, not in the $EROOT system
-        ebootstrap-chroot FEATURES="-news" emerge -u "${EMERGE_OPTS}" "${E_PACKAGES[@]}"
-    fi
 }
 
 ebootstrap-install() {
@@ -321,21 +316,25 @@ ebootstrap-install() {
         # amd64 link from /lib->lib64 is created by baselayout
         # make sure this is done before merging other packages
         # (its probably bug is packages which install directly to /lib ?)
-        ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
-        ebootstrap-emerge -u1 @system || die "Failed merging @system"
-        ebootstrap-emerge -u1 @world || die "Failed merging @world"
+        ebootstrap-emerge -1 baselayout || ewarn "Failed merging baselayout"
+        ebootstrap-emerge -u1 @system || ewarn "Failed merging @system"
     fi
+
+    ebootstrap-chroot-emerge -u1 @world || die "Failed merging @world"
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
 
     # packages
-    install-packages
+    if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
+        einfo "Instaling packages: ${E_PACKAGES[@]}"
+        ebootstrap-chroot-emerge -u "${E_PACKAGES[@]}" || ewarn "Failed merging packages"
+    fi
 
     # default services
     for s in ${E_SERVICES}; do
         einfo "Adding ${s} to default runlevel"
-        ebootstrap-rc-update add "${s}" default
+        ebootstrap-rc-update add "${s}" default || ewarn "Failed rc-update ${s}"
     done
 }
 
