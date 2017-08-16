@@ -101,6 +101,10 @@ ebootstrap-backend () {
 
     local command="${1}" config="${2}" phases phase
 
+    # internal portage-type variables... may be used in ebootstrap-functions
+    P=${config##*/}
+    PN=${P%.*}
+
     # the path to search for eclass files in iherit()
     EBOOTSTRAP_ECLASS_LOCATIONS=( ${EBOOTSTRAP_LIB} $(xdg-config-dir)/eclass )
     debug-print "EBOOTSTRAP_ECLASS_LOCATIONS=${EBOOTSTRAP_ECLASS_LOCATIONS[*]}"
@@ -112,15 +116,13 @@ ebootstrap-backend () {
     export DISTDIR
     export ROOT=${EROOT}
 
-    # internal portage-type variables... may be used in ebootstrap-functions
+    # A is set based on the contents of SRC_URI
     local dest=()
     while read src; do
         dest+=(${src##*/})
     done < <( echo "${SRC_URI}" )
     A=$(IFS=' '; echo "${dest[*]}")
     unset dest
-    P=${config##*/}
-    PN=${P%.*}
 
     # expand global vars
     for v in E_PKGDIR LOCAL_PKGDIR; do
