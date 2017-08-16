@@ -62,7 +62,7 @@ load-global-config
 
 # command line parsing
 SHORT_OPTS="dh:"
-LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,debug,features:,force,bare,hostname:,help"
+LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,arch:,debug,features:,force,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -72,7 +72,7 @@ eval set -- "${OPTS}"
 
 while true; do
     case "${1}" in
-        --info|--fetch|--unpack|--install|--config|--clean)
+        --info|--fetch|--unpack|--install|--config|--clean|--prepare)
             action="${1##*-}"
             ;;
         -d|--debug)
