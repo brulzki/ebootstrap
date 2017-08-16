@@ -33,12 +33,15 @@ inherit() {
         __export_funcs_var=__export_functions_$ECLASS_DEPTH
         unset $__export_funcs_var
 
-        potential_location="${EBOOTSTRAP_LIB}/${1}.eclass"
-        debug-print "${potential_location}"
-        if [[ -f ${potential_location} ]]; then
-            location="${potential_location}"
-            debug-print "  eclass exists: ${location}"
-        fi
+        for repo_location in "${EBOOTSTRAP_ECLASS_LOCATIONS[@]}"; do
+            potential_location="${repo_location}/${1}.eclass"
+            #debug-print "inherit: trying ${potential_location}"
+            if [[ -f ${potential_location} ]]; then
+                location="${potential_location}"
+                #debug-print "  eclass exists: ${location}"
+                break
+            fi
+        done
         debug-print "inherit: $1 -> ${location}"
         [[ -z "${location}" ]] && die "ERROR: ${1}.eclass could not be found by inherit()"
 
@@ -95,6 +98,10 @@ ebootstrap-backend () {
     debug-print-function ${FUNCNAME} "${@}"
 
     local command="${1}" config="${2}" phases phase
+
+    # the path to search for eclass files in iherit()
+    EBOOTSTRAP_ECLASS_LOCATIONS=( ${EBOOTSTRAP_LIB} $(xdg-config-dir)/eclass )
+    debug-print "EBOOTSTRAP_ECLASS_LOCATIONS=${EBOOTSTRAP_ECLASS_LOCATIONS[*]}"
 
     # load the config file
     source ${config}
