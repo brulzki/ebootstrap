@@ -310,16 +310,17 @@ install-packages() {
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    has bare ${EBOOTSTRAP_FEATURES} || return 0
+    if has bare ${EBOOTSTRAP_FEATURES}; then
 
-    # install the system
-    einfo "emerging system packages"
-    # amd64 link from /lib->lib64 is created by baselayout
-    # make sure this is done before merging other packages
-    # (its probably bug is packages which install directly to /lib ?)
-    ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
-    ebootstrap-emerge -u1 @system || die "Failed merging @system"
-    ebootstrap-emerge -u1 @world || die "Failed merging @world"
+        # install the system
+        einfo "emerging system packages"
+        # amd64 link from /lib->lib64 is created by baselayout
+        # make sure this is done before merging other packages
+        # (its probably bug is packages which install directly to /lib ?)
+        ebootstrap-emerge -1 baselayout || die "Failed merging baselayout"
+        ebootstrap-emerge -u1 @system || die "Failed merging @system"
+        ebootstrap-emerge -u1 @world || die "Failed merging @world"
+    fi
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5

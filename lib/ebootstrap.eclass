@@ -77,14 +77,14 @@ ebootstrap_src_configure() {
 }
 
 ebootstrap_src_install() {
-	if has bare ${EBOOTSTRAP_FEATURES}; then
+	if [[ ${EBOOTSTRAP_BACKEND} == "ebuild" ]] && has bare ${EBOOTSTRAP_FEATURES}; then
+		# ebootstrap-install fails because of the environment which is
+		# set up by portage; need to somehow reset the envionment and
+		# run the install in a subshell
 		einfo "ebootstrap_src_install"
 		eerror "ebootstrap-install is not possible at this time"
 	fi
-	# ebootstrap-install fails because of the environment which is
-	# set up by portage; need to somehow reset the envionment and
-	# run the install in a subshell
-	#ebootstrap-install
+	ebootstrap-install
 }
 
 ebootstrap_pkg_preinst() {
