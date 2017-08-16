@@ -39,6 +39,9 @@ EOF
           Clean the ebuild temporary files
 
 Options:
+  --debug (-d)
+          Enables debug messages
+
   --features
           A comma-separated set of features to enable (set the $EBOOTSTRAP_FEATURES
           environment variable).
@@ -58,8 +61,8 @@ EOF
 load-global-config
 
 # command line parsing
-SHORT_OPTS="h:"
-LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,features:,force,bare,hostname:,help"
+SHORT_OPTS="dh:"
+LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,debug,features:,force,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -71,6 +74,9 @@ while true; do
     case "${1}" in
         --info|--fetch|--unpack|--install|--config|--clean)
             action="${1##*-}"
+            ;;
+        -d|--debug)
+            EBOOTSTRAP_DEBUG=1
             ;;
         --arch)
             ARCH="${2}"
@@ -169,6 +175,11 @@ esac
 
 # convert EBOOTSTRAP_FEATURES from an array to a string
 EBOOTSTRAP_FEATURES="${EBOOTSTRAP_FEATURES[*]}"
+
+# enable eclass debugging
+if [[ -n "${EBOOTSTRAP_DEBUG}" ]]; then
+    : ${ECLASS_DEBUG_OUTPUT:=on}
+fi
 
 ebootstrap-backend ${action} "${config}" || eerror "Backend failure: ${action} ${config}"
 

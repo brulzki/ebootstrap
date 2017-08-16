@@ -84,8 +84,10 @@ EXPORT_FUNCTIONS() {
 
 debug-print() {
     # adapted from portage ebuild.sh
-    if [[ ${ECLASS_DEBUG_OUTPUT-on} == on ]]; then
+    if [[ ${ECLASS_DEBUG_OUTPUT} == on ]]; then
         printf 'debug: %s\n' "${@}" >&2
+    elif [[ -n ${ECLASS_DEBUG_OUTPUT} ]]; then
+        printf 'debug: %s\n' "${@}" >> "${ECLASS_DEBUG_OUTPUT}"
     fi
 }
 
