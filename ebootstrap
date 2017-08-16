@@ -12,9 +12,8 @@ EBOOTSTRAP_LIB=$(readlink -m ${0%/*})/lib
 source ${EBOOTSTRAP_LIB}/ebootstrap-core.sh
 
 usage() {
-    n=${0##*/}
     cat <<EOF
-Usage: ${n} [action] [options] CONFIG [TARGET]
+Usage: ${0##*/} [action] [options] CONFIG [TARGET]
 
 Actions: [ --info | --fetch | --unpack | --install | --config | --clean ]
 EOF
@@ -51,10 +50,20 @@ EOF
 
 load-global-config
 
-while [[ "${1}" =~ ^-- ]]; do
-    case ${1} in
+# command line parsing
+SHORT_OPTS=""
+LONG_OPTS="info,fetch,unpack,install,config,clean,force,bare,arch:,help"
+
+# from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
+getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
+OPTS=$(getopt --options "${SHORT_OPTS}" --longoptions "${LONG_OPTS}" --name "${0##*/}" -- "$@")
+[[ $? == 0 ]] || { echo "ERROR: bad command line"; exit 1; }
+eval set -- "${OPTS}"
+
+while true; do
+    case "${1}" in
         --info|--fetch|--unpack|--install|--config|--clean)
-            action=${1##*-}
+            action="${1##*-}"
             ;;
         --force)
             EBOOTSTRAP_FORCE=1
@@ -63,20 +72,25 @@ while [[ "${1}" =~ ^-- ]]; do
             EBOOTSTRAP_BARE=1
             ;;
         --arch)
-            ARCH=${2}
+            ARCH="${2}"
             shift
             ;;
         --help)
             usage --long
             exit 0
             ;;
-        --*)
-            action=${1##*-}
-            ewarn "Trying unknown command ${action}"
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "ERROR: Unhandled option: $1"
+            exit 3
             ;;
     esac
     shift
 done
+unset OPTS
 
 __args=2
 if [[ ${action} =~ ^(info|fetch)$ ]]; then
