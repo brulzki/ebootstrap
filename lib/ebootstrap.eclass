@@ -77,7 +77,7 @@ ebootstrap_src_configure() {
 }
 
 ebootstrap_src_install() {
-	if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
+	if has bare ${EBOOTSTRAP_FEATURES}; then
 		einfo "ebootstrap_src_install"
 		eerror "ebootstrap-install is not possible at this time"
 	fi

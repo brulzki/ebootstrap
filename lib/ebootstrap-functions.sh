@@ -71,7 +71,7 @@ get-stage3-uri() {
     fi
 
     # cache the latest-stage3 file for 14 days before trying to download again
-    if [[ ! -f "${dest}" || ${cache_age} > 14 || $EBOOTSTRAP_FORCE == 1 ]]; then
+    if [[ ! -f "${dest}" || ${cache_age} > 14 ]] || has force ${EBOOTSTRAP_FEATURES}; then
         ewarn "Fetching ${src}"
         # we use -N here to overwrite the existing file, but we touch
         # the file timestamp if the download was successful rather than
@@ -101,7 +101,7 @@ ebootstrap-fetch() {
     debug-print-function ${FUNCNAME} "${@}"
 
     # skip fetch step for bare install if no args were given
-    [[ $# == 0 && ${EBOOTSTRAP_BARE} == 1 ]] && return 0
+    [[ $# == 0 ]] && has bare ${EBOOTSTRAP_FEATURES} && return 0
 
     # if args were passed in, put them into local $SRC_URI
     [[ $# > 0 ]] && local SRC_URI=$(printf "%s\n" "$@")
@@ -114,7 +114,7 @@ ebootstrap-fetch() {
         [[ ${src##*/} == latest-stage3-*.txt ]] && src=$(get-stage3-uri "${src}")
         local dest="${src##*/}"
         debug-print "$src -> $dest"
-        if [[ $EBOOTSTRAP_FORCE == 1 || ! -f "${DISTDIR}/${dest}" ]]; then
+        if has force ${EBOOTSTRAP_FEATURES} || [[ ! -f "${DISTDIR}/${dest}" ]]; then
             einfo "Fetching ${src}"
             wget "${src}" -O "${DISTDIR}/${dest}"
         fi
@@ -190,7 +190,7 @@ ebootstrap-unpack() {
     [[ "$(ls -A "${EROOT}")" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
     # skip unpack step for bare install if no args were given
-    [[ $# == 0 && ${EBOOTSTRAP_BARE} == 1 ]] && return 0
+    [[ $# == 0 ]] && has bare ${EBOOTSTRAP_FEATURES} && return 0
 
     # if args were passed in, put them into local $SRC_URI
     [[ $# > 0 ]] && local A=$(printf "%s\n" "$@")
@@ -246,7 +246,7 @@ ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
 
-    if [[ ${EBOOTSTRAP_BARE} == 1 ]]; then
+    if has bare ${EBOOTSTRAP_FEATURES}; then
         einfo ">>> Initialising bare rootfs in ${EROOT}"
         ebootstrap-init-rootfs
     fi
@@ -310,7 +310,7 @@ install-packages() {
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
+    has bare ${EBOOTSTRAP_FEATURES} || return 0
 
     # install the system
     einfo "emerging system packages"
@@ -649,7 +649,7 @@ ebootstrap-configure() {
     debug-print-function ${FUNCNAME} "${@}"
 
     ebootstrap-configure-portage
-    if [[ ${EBOOTSTRAP_BARE} != 1 ]]; then
+    if ! has bare ${EBOOTSTRAP_FEATURES}; then
         ebootstrap-configure-system
     fi
 }
@@ -663,7 +663,7 @@ ebootstrap-config() {
 ebootstrap-clean() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    [[ ${EBOOTSTRAP_BARE} == 1 ]] || return 0
+    has bare ${EBOOTSTRAP_FEATURES} || return 0
 
     # clean out any new items
     ROOT=${EROOT} eselect news read > /dev/null

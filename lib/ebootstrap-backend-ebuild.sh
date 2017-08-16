@@ -70,7 +70,7 @@ location = ${tmp_overlay}
     export ROOT=${EROOT}
 
     export EBOOTSTRAP_LIB
-    export EBOOTSTRAP_BARE
+    export EBOOTSTRAP_FEATURES
     export REPOPATH E_PKGDIR E_DISTDIR
     export LOCAL_REPOPATH LOCAL_PKGDIR LOCAL_DISTDIR
 

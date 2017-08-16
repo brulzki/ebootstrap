@@ -39,6 +39,10 @@ EOF
           Clean the ebuild temporary files
 
 Options:
+  --features
+          A comma-separated set of features to enable (set the $EBOOTSTRAP_FEATURES
+          environment variable).
+
   --bare
           Do an install from a binary package repository without unpacking
           a stage3 file first. (This is experimental)
@@ -52,7 +56,7 @@ load-global-config
 
 # command line parsing
 SHORT_OPTS=""
-LONG_OPTS="info,fetch,unpack,install,config,clean,force,bare,arch:,help"
+LONG_OPTS="info,fetch,unpack,install,config,clean,arch:,features:,force,bare,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -65,15 +69,20 @@ while true; do
         --info|--fetch|--unpack|--install|--config|--clean)
             action="${1##*-}"
             ;;
-        --force)
-            EBOOTSTRAP_FORCE=1
-            ;;
-        --bare)
-            EBOOTSTRAP_BARE=1
-            ;;
         --arch)
             ARCH="${2}"
             shift
+            ;;
+        --features)
+            # don't quote $2 here, so the split values are added to the array
+            EBOOTSTRAP_FEATURES+=( ${2/,/ } )
+            shift
+            ;;
+        --force)
+            EBOOTSTRAP_FEATURES+=( force )
+            ;;
+        --bare)
+            EBOOTSTRAP_FEATURES+=( bare )
             ;;
         --help)
             usage --long
@@ -150,6 +159,9 @@ case ${action} in
         ewarn "Trying unknown ebuild command: ${action}"
         ;;
 esac
+
+# convert EBOOTSTRAP_FEATURES from an array to a string
+EBOOTSTRAP_FEATURES="${EBOOTSTRAP_FEATURES[*]}"
 
 ebootstrap-backend ${action} "${config}" || eerror "Backend failure: ${action} ${config}"
 
