@@ -685,8 +685,6 @@ ebootstrap-config() {
 ebootstrap-clean() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    has bare ${EBOOTSTRAP_FEATURES} || return 0
-
     # clean out any new items
     ROOT=${EROOT} eselect news read > /dev/null
 
