@@ -322,6 +322,9 @@ ebootstrap-install() {
         ebootstrap-chroot-emerge -1 net-misc/openssh || ewarn "Failed merging openssh"
     fi
 
+    # ensure locales are updated
+    ebootstrap-locale-gen --rebuild
+
     ebootstrap-chroot-emerge -u1 @world || die "Failed merging @world"
 
     # just automerge all the config changes
@@ -626,7 +629,28 @@ set-hostname() {
     fi
 }
 
+ebootstrap-locale-gen() {
+    local generate=0
+    [[ "$1" == "--rebuild" ]] && generate=1
+    if [[ -n "${LOCALE_GEN}" ]]; then
+        einfo "Configuring /etc/locale.gen"
+        # strip any inital commented locales
+        sed '/^#?[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen > ${EROOT}/etc/._cfg0000_locale.gen
+        printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/._cfg0000_locale.gen
+        if ! diff -q ${EROOT}/etc/locale.gen ${EROOT}/etc/._cfg0000_locale.gen > /dev/null; then
+            mv ${EROOT}/etc/._cfg0000_locale.gen ${EROOT}/etc/locale.gen
+            generate=1
+        fi
+    fi
+    if [[ $generate == 1 ]]; then
+        ebootstrap-chroot /usr/sbin/locale-gen || ewarn "Failed locale-gen"
+    fi
+}
+
 ebootstrap-configure-system() {
+    # /etc/locale.gen
+    ebootstrap-locale-gen
+
     # timezone
     if [[ -n "${TIMEZONE}" ]]; then
         einfo "Setting timezone to ${TIMEZONE}"
@@ -634,14 +658,6 @@ ebootstrap-configure-system() {
         if [[ -e ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ]]; then
             cp ${EROOT}/usr/share/zoneinfo/${TIMEZONE} ${EROOT}/etc/localtime
         fi
-    fi
-
-    # /etc/locale.gen
-    if [[ -n "${LOCALE_GEN}" ]]; then
-        einfo "Configuring /etc/locale.gen"
-        # strip any inital commented locales
-        sed -i '/^#[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen
-        printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/locale.gen
     fi
 
     # hostname
