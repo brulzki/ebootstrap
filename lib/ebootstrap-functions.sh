@@ -318,6 +318,8 @@ ebootstrap-install() {
         # (its probably bug is packages which install directly to /lib ?)
         ebootstrap-emerge -1 baselayout || ewarn "Failed merging baselayout"
         ebootstrap-emerge -u1 @system || ewarn "Failed merging @system"
+        #XXX Reinstall openssh through the chroot to fix useradd problem
+        ebootstrap-chroot-emerge -1 net-misc/openssh || ewarn "Failed merging openssh"
     fi
 
     ebootstrap-chroot-emerge -u1 @world || die "Failed merging @world"
