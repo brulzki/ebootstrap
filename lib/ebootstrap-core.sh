@@ -1,4 +1,4 @@
-# Copyright (c) 2016 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2016-2018 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
 # @AUTHOR:
@@ -18,6 +18,13 @@ __is_fn() {
 
 __is_fn einfo || \
 einfo() {
+    # display a disposable message to the user
+    echo "$@" >&2
+}
+
+__is_fn elog || \
+elog() {
+    # log a informative message for the user
     echo "$@" >&2
 }
 
