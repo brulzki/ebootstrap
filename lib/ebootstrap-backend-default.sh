@@ -150,12 +150,13 @@ ebootstrap-backend () {
             phases="fetch unpack prepare configure"
             ;;
         install)
-            phases="fetch unpack prepare configure install"
+            phases="fetch unpack prepare configure install config"
             einfo "Installing to ${EROOT}"
             ;;
         config)
             einfo "Configuring"
-            phases="fetch unpack prepare configure install config"
+            #phases="fetch unpack prepare configure install config"
+            phases="config"
             ;;
         clean)
             phases="clean"
