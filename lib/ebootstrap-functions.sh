@@ -636,7 +636,7 @@ ebootstrap-locale-gen() {
     if [[ -n "${LOCALE_GEN}" ]]; then
         einfo "Configuring /etc/locale.gen"
         # strip any inital commented locales
-        sed '/^#?[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen > ${EROOT}/etc/._cfg0000_locale.gen
+        sed -r '/^#?[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen > ${EROOT}/etc/._cfg0000_locale.gen
         printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/._cfg0000_locale.gen
         if ! diff -q ${EROOT}/etc/locale.gen ${EROOT}/etc/._cfg0000_locale.gen > /dev/null; then
             mv ${EROOT}/etc/._cfg0000_locale.gen ${EROOT}/etc/locale.gen
@@ -644,6 +644,7 @@ ebootstrap-locale-gen() {
         fi
     fi
     if [[ $generate == 1 ]]; then
+        einfo "Regenerating system locales"
         ebootstrap-chroot /usr/sbin/locale-gen || ewarn "Failed locale-gen"
     fi
 }
