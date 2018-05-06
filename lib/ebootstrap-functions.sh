@@ -293,11 +293,11 @@ ebootstrap-prepare() {
 ebootstrap-chroot() {
     # TODO check the mounts are set up
     [[ -z "${EROOT}" ]] && return
-    /usr/bin/chroot "${EROOT}" "$@"
+    /usr/bin/chroot "${EROOT}" /usr/bin/env --unset=ROOT --unset=EROOT "$@"
 }
 
 ebootstrap-chroot-emerge() {
-    ebootstrap-chroot /usr/bin/env --unset=ROOT --unset=EROOT FEATURES="-news" \
+    ebootstrap-chroot /usr/bin/env FEATURES="-news" \
         /usr/bin/emerge ${EMERGE_OPTS} --root=/ "$@"
 }
 
