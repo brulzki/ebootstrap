@@ -637,7 +637,17 @@ ebootstrap-locale-gen() {
         einfo "Configuring /etc/locale.gen"
         # strip any inital commented locales
         sed -r '/^#?[a-z][a-z]_[A-Z][A-Z]/d' ${EROOT}/etc/locale.gen > ${EROOT}/etc/._cfg0000_locale.gen
-        printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/._cfg0000_locale.gen
+        # Append the configured locales to locale.gen
+        if [[ -f /usr/share/i18n/SUPPORTED ]]; then
+            # Correct the name for the locale based on supported locale names
+            for locale in ${LOCALE_GEN}; do
+                grep "^${locale/\./.* }$" /usr/share/i18n/SUPPORTED
+                [[ $? != 0 ]] && ewarn "Unsupported locale: $locale"
+            done >> ${EROOT}/etc/._cfg0000_locale.gen
+        else
+            # This is a poor substitute when the SUPPORTED locale file is unavailable
+            printf '%s\n' ${LOCALE_GEN} | sed 's/\./ /' >> ${EROOT}/etc/._cfg0000_locale.gen
+        fi
         if ! diff -q ${EROOT}/etc/locale.gen ${EROOT}/etc/._cfg0000_locale.gen > /dev/null; then
             mv ${EROOT}/etc/._cfg0000_locale.gen ${EROOT}/etc/locale.gen
             generate=1
