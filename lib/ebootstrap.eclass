@@ -36,7 +36,7 @@ fi
 
 S=${EROOT}
 
-EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_preinst
+EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_preinst pkg_config
 
 #DEFAULT_REPO=${DEFAULT_REPO:-gentoo}
 : ${DEFAULT_REPO:=gentoo}
