@@ -333,7 +333,7 @@ ebootstrap-install() {
     # packages
     if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
         einfo "Instaling packages: ${E_PACKAGES[@]}"
-        ebootstrap-chroot-emerge -u "${E_PACKAGES[@]}" || ewarn "Failed merging packages"
+        ebootstrap-chroot-emerge -u ${E_PACKAGES[@]} || ewarn "Failed merging packages"
     fi
 
     # default services
