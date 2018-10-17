@@ -77,7 +77,7 @@ ebootstrap_src_configure() {
 }
 
 ebootstrap_src_install() {
-	if [[ ${EBOOTSTRAP_BACKEND} == "ebuild" ]] && has bare ${EBOOTSTRAP_FEATURES}; then
+	if [[ ${EBOOTSTRAP_BACKEND} == "ebuild" ]] && has nostage3 ${EBOOTSTRAP_FEATURES}; then
 		# ebootstrap-install fails because of the environment which is
 		# set up by portage; need to somehow reset the envionment and
 		# run the install in a subshell

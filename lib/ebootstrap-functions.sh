@@ -100,8 +100,8 @@ ebootstrap-fetch() {
     # fetch the source archive
     debug-print-function ${FUNCNAME} "${@}"
 
-    # skip fetch step for bare install if no args were given
-    [[ $# == 0 ]] && has bare ${EBOOTSTRAP_FEATURES} && return 0
+    # skip fetch step for nostage3 install if no args were given
+    [[ $# == 0 ]] && has nostage3 ${EBOOTSTRAP_FEATURES} && return 0
 
     # if args were passed in, put them into local $SRC_URI
     [[ $# > 0 ]] && local SRC_URI=$(printf "%s\n" "$@")
@@ -189,8 +189,8 @@ ebootstrap-unpack() {
     # test that the target directory is empty
     [[ "$(ls -A "${EROOT}")" ]] && die "ERROR: rootfs directory already exists: ${EROOT}"
 
-    # skip unpack step for bare install if no args were given
-    [[ $# == 0 ]] && has bare ${EBOOTSTRAP_FEATURES} && return 0
+    # skip unpack step for nostage3 install if no args were given
+    [[ $# == 0 ]] && has nostage3 ${EBOOTSTRAP_FEATURES} && return 0
 
     # if args were passed in, put them into local $SRC_URI
     [[ $# > 0 ]] && local A=$(printf "%s\n" "$@")
@@ -246,8 +246,8 @@ ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
 
-    if has bare ${EBOOTSTRAP_FEATURES} && [[ ! -d "${EROOT}/dev" ]]; then
-        einfo ">>> Initialising bare rootfs in ${EROOT}"
+    if has nostage3 ${EBOOTSTRAP_FEATURES} && [[ ! -d "${EROOT}/dev" ]]; then
+        einfo ">>> Initialising bare rootfs (nostage3) in ${EROOT}"
         ebootstrap-init-rootfs
     fi
 
@@ -309,7 +309,7 @@ ebootstrap-rc-update() {
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    if has bare ${EBOOTSTRAP_FEATURES}; then
+    if has nostage3 ${EBOOTSTRAP_FEATURES}; then
 
         # install the system
         einfo "emerging system packages"
@@ -683,7 +683,7 @@ ebootstrap-configure() {
     debug-print-function ${FUNCNAME} "${@}"
 
     ebootstrap-configure-portage
-    if ! has bare ${EBOOTSTRAP_FEATURES}; then
+    if ! has nostage3 ${EBOOTSTRAP_FEATURES}; then
         ebootstrap-configure-system
     fi
 }

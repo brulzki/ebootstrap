@@ -46,9 +46,12 @@ Options:
           A comma-separated set of features to enable (set the $EBOOTSTRAP_FEATURES
           environment variable).
 
-  --bare
+  --nostage3
           Do an install from a binary package repository without unpacking
           a stage3 file first. (This is experimental)
+
+  --bare
+          (deprecated) Alias for --nostage3
 
   --force
           Try harder to do something that would otherwise fail
@@ -62,7 +65,7 @@ load-global-config
 
 # command line parsing
 SHORT_OPTS="dh:"
-LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,arch:,debug,features:,force,bare,hostname:,help"
+LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,arch:,debug,features:,force,nostage3,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -90,8 +93,8 @@ while true; do
         --force)
             EBOOTSTRAP_FEATURES+=( force )
             ;;
-        --bare)
-            EBOOTSTRAP_FEATURES+=( bare )
+        --nostage3|--bare)
+            EBOOTSTRAP_FEATURES+=( nostage3 )
             ;;
         -h|--hostname)
             export E_HOSTNAME="${2}"
