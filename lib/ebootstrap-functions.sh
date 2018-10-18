@@ -127,8 +127,22 @@ var-expand() {
 
 fstype() {
     local path="${1}"
+    local t i=0 maxdepth=30
+    local lastpath
 
-    df -T "${path}" | awk '/^\// { print $2 }' 2> /dev/null
+    t=$(df -T "${path}" 2> /dev/null | awk '/^\// { print $2 }')
+
+    while [[ ${t} == "" ]]; do
+        (( i = i+1 ))
+        # prevent infinite recursion
+        [[ $i -ge $maxdepth ]] && break
+        path="${path%/*}"
+        [[ "${path}" == "${lastpath}" ]] && break
+        lastpath="${path}"
+        t=$(df -T "${path}" 2> /dev/null | awk '/^\// { print $2 }')
+    done
+
+    printf -- "${t}\n"
 }
 
 create-root() {
@@ -139,7 +153,8 @@ create-root() {
     # ensure the parent directory is created first so that the btrfs test works
     mkdir -p "${path%/*}" || return -1
 
-    if [[ $UID == 0 && $(fstype "${path%/*}") == "btrfs" ]]; then
+    if [[ $UID == 0 ]] && command -v btrfs > /dev/null && \
+           [[ $(fstype "${path%/*}") == "btrfs" ]]; then
         einfo "Creating btrfs subvolume ${path}"
         btrfs subvolume create "${path}"
     else
