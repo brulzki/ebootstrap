@@ -366,29 +366,53 @@ ebootstrap-prepare() {
         ebootstrap-init-rootfs
     fi
 
-    if [[ $UID == 0 ]]; then
-        # FIXME: this assumes that the paths are the same between the host
-        # and the the rootfs... may not necessarily be the case
-        einfo "Mounting portage dirs from host"
-        for v in REPOPATH E_DISTDIR E_PKGDIR /dev /dev/pts /proc; do
-            if [[ $v == /* ]]; then
-                src="${v}"
-                dest="${v}"
-            else
-                # $v is a variable name reference
-                # expand $v to a LOCAL_ variable reference if necessary
-                [[ -z ${!v} ]] && continue
-                lv="LOCAL_${v/#E_/}"
-                [[ -z ${!lv} ]] && lv="${v}"
-                src="$(var-expand ${lv})"
-                dest="$(var-expand ${v})"
-            fi
-            ebootstrap-mount "${src}" "${dest}" || die "Failed to mount ${dest}"
-        done
-        cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
-    else
+    cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
+
+    if [[ $UID != 0 ]]; then
         ewarn ">>> Skipping mounting of portage dirs without root access"
+        return
     fi
+
+    # repos
+    echo "${E_REPOS}" | while read -a repo; do
+        # skip blank lines and comments
+        [[ -n "${repo}" ]] || continue
+        [[ "${repo}" =~ ^# ]] && continue
+
+        ebootstrap-mount "$(portageq get_repo_path / ${repo[0]})" "${REPOPATH}/${repo[0]}" || die
+    done
+
+    # distfiles
+    ebootstrap-mount $(portageq distdir) ${E_DISTDIR} || die
+
+    # packages
+    ldir=$(portageq pkgdir)
+    # XXX this won't work if we just use a simple name like packages
+    # TODO check that the profiles match first
+    if [[ $(get-profile) == $(get-profile ${EROOT}) ]]; then
+        if [[ ${E_PKGDIR} == ${ldir} ]]; then
+            ebootstrap-mount ${E_PKGDIR} || die
+        elif [[ ${E_PKGDIR##*/} == ${ldir##*/} ]]; then
+            # the pkgdir names match; but different locations
+            ebootstrap-mount ${ldir} ${E_PKGDIR} || die
+        else
+            einfo "Creating PKGDIR=${E_PKGDIR}"
+            mkdir -p ${E_PKGDIR}
+        fi
+    else
+        einfo "profiles don't match"
+        if [[ -d ${ldir%/*}/${E_PKGDIR##*/} ]]; then
+            # found a relative packages dir with the correct name
+            ebootstrap-mount ${ldir%/*}/${E_PKGDIR##*/} ${E_PKGDIR} || die
+        else
+            einfo "Creating PKGDIR=${E_PKGDIR}"
+            mkdir -p ${E_PKGDIR}
+        fi
+    fi
+
+    for v in /dev /dev/pts /proc; do
+        ebootstrap-mount ${v} || die "Failed to mount ${v}"
+    done
 }
 
 ebootstrap-chroot() {
