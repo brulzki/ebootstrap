@@ -257,6 +257,30 @@ ebootstrap-unpack-alt() {
     done
 }
 
+ebootstrap-mount() {
+    debug-print-function ${FUNCNAME} "${@}"
+    local src=${1} dest=${2:-${1}}
+
+    [[ -z ${src} ]] && return 1
+
+    if grep -q " ${EROOT%/}${dest} " /proc/mounts; then
+	# XXX already mounted - assume its correct
+	return
+    fi
+    if [[ ! -d "${EROOT%/}${dest}" ]]; then
+	einfo "Creating mount point at ${EROOT%/}${dest}"
+	mkdir -p "${EROOT%/}${dest}"
+    fi
+
+    mkdir -p ${EROOT%/}/var/tmp/ebootstrap
+    if [[ ! -f ${EROOT%/}/var/tmp/ebootstrap/mounts ]]; then
+	printf "# EROOT=${EROOT}\n# src   dest\n" > ${EROOT%/}/var/tmp/ebootstrap/mounts
+    fi
+    einfo "mounting from ${src} to ${EROOT%/}${dest}"
+    mount --bind "${src}" "${EROOT}${dest}" && \
+        printf "${src} ${dest}\n" >> ${EROOT%/}/var/tmp/ebootstrap/mounts
+}
+
 ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
@@ -283,16 +307,7 @@ ebootstrap-prepare() {
                 src="$(var-expand ${lv})"
                 dest="$(var-expand ${v})"
             fi
-            if grep -q " ${EROOT}${dest} " /proc/mounts; then
-                # already mounted - assume its correct
-                continue
-            fi
-            if [[ ! -d "${EROOT}${dest}" ]]; then
-                einfo "Creating mount point at ${EROOT}${dest}"
-                mkdir -p "${EROOT}${dest}"
-            fi
-            einfo "mounting from ${src} to ${EROOT}${dest}"
-            mount --bind "${src}" "${EROOT}${dest}" || die "Failed to mount ${dest}"
+            ebootstrap-mount "${src}" "${dest}" || die "Failed to mount ${dest}"
         done
         cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
     else
