@@ -281,6 +281,31 @@ ebootstrap-mount() {
         printf "${src} ${dest}\n" >> ${EROOT%/}/var/tmp/ebootstrap/mounts
 }
 
+# get-profile :: returns a space-separated list of parent profiles
+get-profile() {
+    debug-print-function ${FUNCNAME} "${@}"
+    local root=${1:-/}
+    local -a p
+    local x
+
+    if [[ -L ${root%/}/etc/portage/make.profile ]]; then
+        p=( $(readlink -n ${root%/}/etc/portage/make.profile) )
+    elif [[ -f ${root%/}/etc/portage/make.profile/parent ]]; then
+        while read x; do
+            # skip blank lines and comments
+            [[ -n "${x}" ]] || continue
+            [[ "${x}" =~ ^# ]] && continue
+            # append the profile
+            p+=( "${x}" )
+        done < ${root%/}/etc/portage/make.profile/parent
+    else
+        eerror "Missing profile in ${root}"
+        return 1
+    fi
+
+    echo "${p[@]}"
+}
+
 ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
