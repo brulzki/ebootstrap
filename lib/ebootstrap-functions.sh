@@ -298,11 +298,6 @@ ebootstrap-prepare() {
     else
         ewarn ">>> Skipping mounting of portage dirs without root access"
     fi
-
-    # FIXME: these are my personal config preferences
-    # needs to go into a hooks function somewhere
-    mkdir -p ${EROOT}/mnt/{system,tmp}
-    mkdir -p ${EROOT}/boot/efi
 }
 
 ebootstrap-chroot() {
