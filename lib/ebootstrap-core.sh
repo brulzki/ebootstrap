@@ -117,8 +117,8 @@ find-config-file() {
 __eroot-repos-config() {
     # prints a modified repositories configuration for the EROOT with locations
     # altered to be the full path relative to the host root
-    PORTAGE_CONFIGROOT="${EROOT}" portageq repos_config / | \
-        awk -v EROOT="${EROOT}" -e '
+    portageq repos_config ${EROOT%/} | \
+        awk -v EROOT="${EROOT%/}" -e '
             /^\[/ { print }
             /^location/ { print $1, $2, EROOT$3 }'
 
@@ -127,7 +127,7 @@ __eroot-repos-config() {
     # portage can't find the host profile.  Setting EBOOTSTRAP_PROFILE_REPOS
     # ensures that the repo is added run emerge within ebootstrap.
     for r in ${EBOOTSTRAP_PROFILE_REPOS}; do
-        if ! has ${r} $(PORTAGE_CONFIGROOT="${EROOT}" portageq get_repos /); then
+        if ! has ${r} $(portageq get_repos ${EROOT%/}); then
             echo "[${r}]"
             echo "location = $(portageq get_repo_path / ${r})"
         fi
@@ -140,8 +140,8 @@ ebootstrap-emerge() {
 
     # Make PKGDIR and DISTDIR within the EROOT relative to the host root
     # Override repository paths to be relative to the host root
-    PKGDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq pkgdir)" \
-    DISTDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq distdir)" \
+    PKGDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq pkgdir 2> /dev/null)" \
+    DISTDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq distdir 2> /dev/null)" \
     PORTAGE_REPOSITORIES="$(__eroot-repos-config)" \
     FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
 }
