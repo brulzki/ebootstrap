@@ -386,30 +386,22 @@ ebootstrap-prepare() {
     ebootstrap-mount $(portageq distdir) ${E_DISTDIR} || die
 
     # packages
-    ldir=$(portageq pkgdir)
     # XXX this won't work if we just use a simple name like packages
-    # TODO check that the profiles match first
-    if [[ $(get-profile) == $(get-profile ${EROOT}) ]]; then
-        if [[ ${E_PKGDIR} == ${ldir} ]]; then
-            ebootstrap-mount ${E_PKGDIR} || die
-        elif [[ ${E_PKGDIR##*/} == ${ldir##*/} ]]; then
-            # the pkgdir names match; but different locations
-            ebootstrap-mount ${ldir} ${E_PKGDIR} || die
-        else
-            einfo "Creating PKGDIR=${E_PKGDIR}"
-            mkdir -p ${E_PKGDIR}
-        fi
+    local host_pkgdir=$(portageq pkgdir)
+    local eroot_profile="${E_PROFILE}"
+
+    if [[ $(get-profile) == ${eroot_profile} && ${E_PKGDIR##*/} == ${host_pkgdir##*/} ]]; then
+        # use the hosts pkgdir if the profiles match and the pkgdir names match
+	ebootstrap-mount ${host_pkgdir} ${E_PKGDIR} || die
+    elif [[ -d ${host_pkgdir%/*}/${E_PKGDIR##*/} ]]; then
+	# found a relative packages dir with the correct name
+	ebootstrap-mount ${host_pkgdir%/*}/${E_PKGDIR##*/} ${E_PKGDIR} || die
     else
-        einfo "profiles don't match"
-        if [[ -d ${ldir%/*}/${E_PKGDIR##*/} ]]; then
-            # found a relative packages dir with the correct name
-            ebootstrap-mount ${ldir%/*}/${E_PKGDIR##*/} ${E_PKGDIR} || die
-        else
-            einfo "Creating PKGDIR=${E_PKGDIR}"
-            mkdir -p ${E_PKGDIR}
-        fi
+	einfo "Creating PKGDIR=${E_PKGDIR}"
+	mkdir -p ${E_PKGDIR}
     fi
 
+    # chroot mounts
     for v in /dev /dev/pts /proc; do
         ebootstrap-mount ${v} || die "Failed to mount ${v}"
     done
