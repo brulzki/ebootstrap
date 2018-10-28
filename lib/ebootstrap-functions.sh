@@ -285,11 +285,13 @@ ebootstrap-mount() {
 get-profile() {
     debug-print-function ${FUNCNAME} "${@}"
     local root=${1:-/}
+    local fix_links=0
     local -a p
     local x
 
     if [[ -L ${root%/}/etc/portage/make.profile ]]; then
         p=( $(readlink -n ${root%/}/etc/portage/make.profile) )
+        fix_links=1
     elif [[ -f ${root%/}/etc/portage/make.profile/parent ]]; then
         while read x; do
             # skip blank lines and comments
@@ -297,10 +299,59 @@ get-profile() {
             [[ "${x}" =~ ^# ]] && continue
             # append the profile
             p+=( "${x}" )
+            [[ ${x} == ../../* ]] && fix_links=1
         done < ${root%/}/etc/portage/make.profile/parent
     else
         eerror "Missing profile in ${root}"
         return 1
+    fi
+
+    if [[ $fix_links == 1 ]]; then
+        # convert repo path from relative link to repo:profile
+        # adapted from do_show() in /usr/share/eselect/modules/profile.eselect
+        # license: GPL2 or later
+
+        local link repos repo_paths dir i
+
+        # initialise the repos and repo_paths arrays
+        if [[ -e ${root%/}/etc/portage/repos.conf ]]; then
+            local DEFAULT_REPO=$(portageq repos_config ${root} | grep ^main-repo | cut -d ' ' -f 3)
+            # sort: DEFAULT_REPO first, then alphabetical order
+            repos=( $(portageq get_repos ${root} \
+                          | sed "s/[[:space:]]\+/\n/g;s/^${DEFAULT_REPO}\$/ &/gm" \
+                          | LC_ALL=C sort) )
+            repo_paths=( $(portageq get_repo_path ${root} "${repos[@]}") ) \
+                || die -q "get_repo_path failed"
+            [[ ${#repos[@]} -eq 0 || ${#repos[@]} -ne ${#repo_paths[@]} ]] \
+                && die -q "Cannot get list of repositories"
+        else
+            # current stage3 images don't set repos.conf, so assume the gentoo defaults
+            repos=( gentoo )
+            repo_paths=( /usr/portage )
+        fi
+
+        for x in ${!p[@]}; do
+            # check if the profile is already formed like repo:profile
+            [[ ${p[${x}]} =~ ^.*:.* ]] && continue
+
+            # a profile relative link always starts with ../..; strip that off so
+            # that the link absolute from the rootfs
+            link=${p[${x}]##../..}
+
+            # Unfortunately, it's not obvious where to split a given path
+            # in repository directory and profile. So loop over all
+            # repositories and compare the canonicalised paths.
+            for (( i = 0; i < ${#repos[@]}; i++ )); do
+                dir="${repo_paths[i]}/profiles"
+                if [[ ${link} == "${dir}"/* ]]; then
+                    link=${link##"${dir}/"}
+                    [[ ${repos[i]} != "${DEFAULT_REPO}" ]] \
+                        && link=${repos[i]}:${link}
+                    p[${x}]=${link}
+                    break
+                fi
+            done
+        done
     fi
 
     echo "${p[@]}"
