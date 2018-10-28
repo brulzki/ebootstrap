@@ -493,19 +493,6 @@ relative_name() {
     [[ ${reset_extglob} -eq 1 ]] && shopt -u extglob
 }
 
-get_repo_path() {
-    local repo="$1" path
-
-    # override the PORTAGE_CONFIGROOT to get the path relative to EROOT target
-    # this doesn't work when run inside of portage
-    path=$(env PORTAGE_CONFIGROOT=${EROOT} portageq get_repo_path / ${repo})
-
-    # fix the path in the case that nothing was found
-    [[ -z "${path}" ]] && path="/usr/portage"
-
-    echo "${path}"
-}
-
 # reimplement portageq get_repo_path
 # the portageq version returns the path from the host system, not
 # from within the root (Portage 2.3.40)
@@ -528,13 +515,15 @@ portageq() {
 # set_profile() is adapted from profile.eselect
 # license: GPL2 or later
 set_profile() {
+    debug-print-function ${FUNCNAME} "${@}"
     local target=$1
-    local repo
+    local repo repopath
 
     repo=${target%%:*}
     [[ ${repo} == "${target}" || -z ${repo} ]] && repo=${DEFAULT_REPO}
     target=${target#*:}
-    repopath=$(get_repo_path "${repo}") || die -q "get_repo_path failed"
+    repopath=$(portageq get_repo_path "${EROOT%/}/" "${repo}") || die -q "get_repo_path failed"
+    [[ -z "${repopath}" ]] && repopath="/usr/portage"
 
     [[ -z ${target} || -z ${repopath} ]] \
         && die -q "Target \"$1\" doesn't appear to be valid!"
@@ -544,7 +533,7 @@ set_profile() {
 
     # set relative symlink
     ln -snf "$(relative_name "${repopath}" /etc/portage)/profiles/${target}" \
-       ${EROOT}/etc/portage/make.profile \
+       ${EROOT%/}/etc/portage/make.profile \
         || die -q "Couldn't set new ${MAKE_PROFILE} symlink"
 
     return 0
