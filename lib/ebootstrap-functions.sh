@@ -523,7 +523,6 @@ set_profile() {
     [[ ${repo} == "${target}" || -z ${repo} ]] && repo=${DEFAULT_REPO}
     target=${target#*:}
     repopath=$(portageq get_repo_path "${EROOT%/}/" "${repo}") || die -q "get_repo_path failed"
-    [[ -z "${repopath}" ]] && repopath="/usr/portage"
 
     [[ -z ${target} || -z ${repopath} ]] \
         && die -q "Target \"$1\" doesn't appear to be valid!"
