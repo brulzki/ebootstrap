@@ -506,6 +506,25 @@ get_repo_path() {
     echo "${path}"
 }
 
+# reimplement portageq get_repo_path
+# the portageq version returns the path from the host system, not
+# from within the root (Portage 2.3.40)
+# Portage bug: https://bugs.gentoo.org/670082
+portageq() {
+    case ${1} in
+        get_repo_path)
+            /usr/bin/portageq repos_config ${2}/ | \
+                awk -v REPO="[${3}]" -e '
+                    BEGIN { x=0 }
+                    /^\[/ { if ($0==REPO) x=1; else x=0 }
+                    /^location/ { if (x==1) print $3 }'
+            ;;
+        *)
+            /usr/bin/portageq "$@"
+            ;;
+    esac
+}
+
 # set_profile() is adapted from profile.eselect
 # license: GPL2 or later
 set_profile() {
