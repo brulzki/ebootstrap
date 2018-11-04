@@ -136,10 +136,16 @@ __eroot-repos-config() {
 
     # To run emerge with --config-root, all of the repos used by the host
     # profile must be defined in the target portage config, otherwise
-    # portage can't find the host profile.  Setting EBOOTSTRAP_PROFILE_REPOS
-    # ensures that the repo is added run emerge within ebootstrap.
-    for r in ${EBOOTSTRAP_PROFILE_REPOS}; do
-        if ! has ${r} $(portageq get_repos ${EROOT%/}); then
+    # portage can't find the host profile.
+
+    # If the repo which contains the host's profile is not also included in
+    # the eroot profiles, then the host profile cannot be found.
+
+    # loop through the unique local repos referenced in the profile parents
+    local profiles=( $(get-profile) )
+    local eroot_repos="$(portageq get_repos ${EROOT%/})"
+    for r in $(printf "%s\n" "${profiles[@]%%:*}" | sort -u); do
+        if ! has ${r} ${eroot_repos}; then
             echo "[${r}]"
             echo "location = $(portageq get_repo_path / ${r})"
         fi
