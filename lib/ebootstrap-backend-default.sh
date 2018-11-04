@@ -106,7 +106,8 @@ ebootstrap-backend () {
     PN=${P%.*}
 
     # the path to search for eclass files in iherit()
-    EBOOTSTRAP_ECLASS_LOCATIONS=( ${EBOOTSTRAP_LIB} $(xdg-config-dir)/eclass )
+    EBOOTSTRAP_ECLASS_LOCATIONS=( ${EBOOTSTRAP_LIB}
+                                  "${EBOOTSTRAP_EROOT_LOCATIONS[@]/%eroot/eclass}" )
     debug-print "EBOOTSTRAP_ECLASS_LOCATIONS=${EBOOTSTRAP_ECLASS_LOCATIONS[*]}"
 
     # load the config file
