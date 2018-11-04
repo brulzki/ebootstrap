@@ -108,6 +108,9 @@ ebootstrap-fetch() {
 
     debug-print "SRC_URI=\"${SRC_URI}\""
 
+    [[ -d "${DISTDIR}" ]] || mkdir -p "${DISTDIR}" || \
+        die "ERROR: failed creating ${DISTDIR}"
+
     while read src; do
         # skip empty lines
         [[ -z ${src} ]] && continue
