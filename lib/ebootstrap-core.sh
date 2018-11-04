@@ -114,23 +114,28 @@ __eroot-locations() {
 }
 
 find-config-file() {
-    local name=${1} config
-    local config_dir=$(xdg-config-dir)
+    local name=${1}
+    local config path potential_location
 
     case ${name} in
-        /* | ./*)
-            [[ -f ${name} ]] && config=${name};
+        /* | ./* | ../*)
+            # looks like we were passed a file name
+            debug-print "testing: ${name}"
+            [[ -f ${name} ]] && config="$(readlink -m ${name})";
             ;;
         *)
             if [[ -f ${name} ]]; then
-                config=$(readlink -m ${1})
-            elif [[ -f ${0%/*}/config/${1}.eroot ]]; then
-                config=$(readlink -m ${0%/*}/config/${1}.eroot)
-            elif [[ -f ${config_dir}/${1}.eroot ]]; then
-                config=$(readlink -m ${config_dir}/${1}.eroot)
+                config="$(readlink -m ${name})"
             else
-                # equery means gentoolkit must be installed
-                config=$(equery which ${1} 2>/dev/null)
+                for path in "${EBOOTSTRAP_EROOT_LOCATIONS[@]}"; do
+                    potential_location="${path}/${name%.eroot}.eroot"
+                    debug-print "find-config-file: trying ${potential_location}"
+                    if [[ -f ${potential_location} ]]; then
+                        config="${potential_location}"
+                        debug-print "found: ${config}"
+                        break
+                    fi
+                done
             fi
             ;;
     esac
