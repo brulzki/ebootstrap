@@ -148,6 +148,7 @@ else
 fi
 
 # locate the target configuration file
+export EBOOTSTRAP_EROOT_LOCATIONS=( $(__eroot-locations) )
 config=$(find-config-file ${1})
 [[ $? == 0 ]] || die "${0##*/}: there are no configs to satisfy \"${1}\""
 

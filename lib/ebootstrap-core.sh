@@ -89,6 +89,30 @@ load-global-config() {
     : ${DISTDIR:=/var/cache/ebootstrap}
 }
 
+# __eroot-locations :: prints a list of paths to search for the eroot config
+# The path is in the following order (portage repos are added only if an
+# eroot dir exists within the repo):
+#  - in $EBOOTSTRAP_OVERLAY
+#  - in $PORTDIR_OVERLAY
+#  - through the current configured host repos
+#  - in $EBOOTSTRAP_LIB
+__eroot-locations() {
+    local repo repopath
+
+    # EBOOTSTRAP_OVERLAY may be specified as a relative path, so we expand
+    # that to the full path
+    [[ -n ${EBOOTSTRAP_OVERLAY} ]] && realpath -sm ${EBOOTSTRAP_OVERLAY%/}/eroot
+
+    # Add portage repos only if they have repos if an eroot dir exists
+    [[ -n ${PORTDIR_OVERLAY} ]] && \
+        -d [[ ${PORTDIR_OVERLAY}/eroot ]] && echo ${PORTDIR_OVERLAY%/}/eroot
+    for repo in $(portageq get_repos /); do
+        repopath=$(portageq get_repo_path / ${repo})
+        [[ -d ${repopath}/eroot ]] && echo ${repopath}/eroot
+    done
+    echo ${EBOOTSTRAP_LIB}/eroot
+}
+
 find-config-file() {
     local name=${1} config
     local config_dir=$(xdg-config-dir)
