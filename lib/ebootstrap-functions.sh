@@ -509,6 +509,13 @@ portageq() {
                     /^\[/ { if ($0==REPO) x=1; else x=0 }
                     /^location/ { if (x==1) print $3 }'
             ;;
+        get_repos)
+            /usr/bin/portageq repos_config ${2}/ | \
+                awk -e '
+                    /^\[DEFAULT\]/ { next; }
+                    /^\[/ { printf "%s ",substr($1,2,length($1)-2); }
+                    END { printf "\n"; }'
+            ;;
         *)
             /usr/bin/portageq "$@"
             ;;
