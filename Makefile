@@ -18,6 +18,9 @@ install:
 	$(INSTALL) -m 644 -t $(DESTDIR)$(libdir) lib/ebootstrap-functions.sh
 	$(INSTALL) -m 644 -t $(DESTDIR)$(libdir) lib/ebootstrap.eclass
 
+	mkdir -m 755 -p $(DESTDIR)$(libdir)/eroot
+	$(INSTALL) -m 644 -t $(DESTDIR)$(libdir)/eroot lib/eroot/stage3.eroot
+
 	sed 's!^EBOOTSTRAP_LIB=.*/lib$$!EBOOTSTRAP_LIB=$(libdir)!' ebootstrap > $(DESTDIR)$(bindir)/ebootstrap
 	chmod 755 $(DESTDIR)$(bindir)/ebootstrap
 
