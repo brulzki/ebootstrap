@@ -71,8 +71,7 @@ location = ${tmp_overlay}
 
     export EBOOTSTRAP_LIB
     export EBOOTSTRAP_FEATURES
-    export REPOPATH E_PKGDIR E_DISTDIR
-    export LOCAL_REPOPATH LOCAL_PKGDIR LOCAL_DISTDIR
+    export REPOS_BASE E_PKGDIR E_DISTDIR
 
     /usr/bin/ebuild --skip-manifest "${ebuild}" ${phase}
 

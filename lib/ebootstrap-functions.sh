@@ -17,8 +17,8 @@
 #
 # Portage configuration:
 #
-# REPOPATH    - the path where the overlay repositories are created
-#               eg REPOPATH=/var/lib/portage/repos
+# REPOS_BASE  - the path where the overlay repositories are created
+#               eg REPOS_BASE=/var/db/repos
 #
 # E_REPOS     - used to configure the files in /etc/portage/repos.conf/
 #               this is a multiline variable of "name uri [options]"
@@ -382,7 +382,7 @@ ebootstrap-prepare() {
         [[ -n "${repo}" ]] || continue
         [[ "${repo}" =~ ^# ]] && continue
 
-        ebootstrap-mount "$(portageq get_repo_path / ${repo[0]})" "${REPOPATH}/${repo[0]}" || die
+        ebootstrap-mount "$(portageq get_repo_path / ${repo[0]})" "${REPOS_BASE}/${repo[0]}" || die
     done
 
     # distfiles
@@ -582,7 +582,7 @@ get-repo-config() {
     done
 
     echo "[${name}]"
-    echo "location = ${REPOPATH}/${name}"
+    echo "location = ${REPOS_BASE}/${name}"
     echo "sync-uri = ${uri}"
     echo "sync-type = ${sync_type}"
 
