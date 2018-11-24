@@ -550,6 +550,8 @@ set_profile() {
 
 get-repo-config() {
     local name=$1 uri=$2
+    local location="${REPOS_BASE}/${name}"
+    local sync_type
 
     case "${uri}" in
         rsync://* | ssh://*)
@@ -573,6 +575,9 @@ get-repo-config() {
                 echo "main-repo = ${name}"
                 echo
                 ;;
+            location=*)
+                location="${opt#*=}"
+                ;;
             sync-type=*)
                 sync_type="${opt#*=}"
                 ;;
@@ -582,11 +587,12 @@ get-repo-config() {
     done
 
     echo "[${name}]"
-    echo "location = ${REPOS_BASE}/${name}"
+    echo "location = ${location}"
     echo "sync-uri = ${uri}"
     echo "sync-type = ${sync_type}"
 
     for opt in ${*:3}; do
+        [[ "${opt}" =~ ^location= ]] && continue
         [[ "${opt}" =~ ^sync-type= ]] && continue
         [[ "${opt}" =~ .+=.* ]] && echo "${opt/=/ = }"
     done
