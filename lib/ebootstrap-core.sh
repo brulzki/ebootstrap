@@ -70,6 +70,7 @@ load-global-config() {
 
     # this should always be set... use default values otherwise
     : ${DISTDIR:=/var/cache/ebootstrap}
+    : ${REPOS_BASE:=/var/db/repos}
 }
 
 # __eroot-locations :: prints a list of paths to search for the eroot config
