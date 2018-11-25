@@ -317,8 +317,9 @@ get-profile() {
         local link repos repo_paths dir i
 
         # initialise the repos and repo_paths arrays
-        if [[ -e ${root%/}/etc/portage/repos.conf ]]; then
-            local DEFAULT_REPO=$(portageq repos_config ${root} | grep ^main-repo | cut -d ' ' -f 3)
+        if [[ -e ${root%/}/etc/portage/repos.conf || \
+                  -f ${root%/}/etc/portage/make.conf ]]; then
+             local DEFAULT_REPO=$(portageq repos_config ${root} | grep ^main-repo | cut -d ' ' -f 3)
             # sort: DEFAULT_REPO first, then alphabetical order
             repos=( $(portageq get_repos ${root} \
                           | sed "s/[[:space:]]\+/\n/g;s/^${DEFAULT_REPO}\$/ &/gm" \
@@ -328,9 +329,7 @@ get-profile() {
             [[ ${#repos[@]} -eq 0 || ${#repos[@]} -ne ${#repo_paths[@]} ]] \
                 && die -q "Cannot get list of repositories"
         else
-            # current stage3 images don't set repos.conf, so assume the gentoo defaults
-            repos=( gentoo )
-            repo_paths=( /usr/portage )
+            die "ERROR: get-profiles: /etc/portage has not been configured"
         fi
 
         for x in ${!p[@]}; do
