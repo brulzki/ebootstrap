@@ -363,11 +363,15 @@ get-profile() {
 ebootstrap-prepare() {
     debug-print-function ${FUNCNAME} "${@}"
     local src dest lv
+    local repo host_path eroot_path
 
     if has nostage3 ${EBOOTSTRAP_FEATURES} && [[ ! -d "${EROOT}/dev" ]]; then
         einfo ">>> Initialising bare rootfs (nostage3) in ${EROOT}"
         ebootstrap-init-rootfs
     fi
+
+    # ensure that the portage config is updated so it can be used for mounts
+    ebootstrap-configure-portage
 
     cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
 
@@ -377,31 +381,33 @@ ebootstrap-prepare() {
     fi
 
     # repos
-    echo "${E_REPOS}" | while read -a repo; do
-        # skip blank lines and comments
-        [[ -n "${repo}" ]] || continue
-        [[ "${repo}" =~ ^# ]] && continue
-
-        ebootstrap-mount "$(portageq get_repo_path / ${repo[0]})" "${REPOS_BASE}/${repo[0]}" || die
+    for repo in $(portageq get_repos ${EROOT%/}); do
+        host_path=$(portageq get_repo_path / ${repo})
+        target_path=$(portageq get_repo_path ${EROOT%/} ${repo})
+        ebootstrap-mount ${host_path} ${target_path}
     done
 
     # distfiles
-    ebootstrap-mount $(portageq distdir) ${E_DISTDIR} || die
+    local target_distdir=$(PORTAGE_CONFIGROOT=${EROOT%/} portageq distdir 2> /dev/null)
+    ebootstrap-mount $(portageq distdir) ${target_distdir} || die
 
     # packages
-    # XXX this won't work if we just use a simple name like packages
     local host_pkgdir=$(portageq pkgdir)
-    local eroot_profile="${E_PROFILE}"
+    local target_pkgdir=$(PORTAGE_CONFIGROOT=${EROOT%/} portageq pkgdir 2> /dev/null)
+    local target_profile="$(get-profile ${EROOT})"
 
-    if [[ $(get-profile) == ${eroot_profile} && ${E_PKGDIR##*/} == ${host_pkgdir##*/} ]]; then
+    # Try to match the target pkgdir with a path from the host
+    # XXX this won't work if we just use a simple name like packages
+    if [[ "$(get-profile)" == "${target_profile}" \
+              && ${target_pkgdir##*/} == ${host_pkgdir##*/} ]]; then
         # use the hosts pkgdir if the profiles match and the pkgdir names match
-	ebootstrap-mount ${host_pkgdir} ${E_PKGDIR} || die
-    elif [[ -d ${host_pkgdir%/*}/${E_PKGDIR##*/} ]]; then
+	ebootstrap-mount ${host_pkgdir} ${target_pkgdir} || die
+    elif [[ -d ${host_pkgdir%/*}/${target_pkgdir##*/} ]]; then
 	# found a relative packages dir with the correct name
-	ebootstrap-mount ${host_pkgdir%/*}/${E_PKGDIR##*/} ${E_PKGDIR} || die
+	ebootstrap-mount ${host_pkgdir%/*}/${target_pkgdir##*/} ${target_pkgdir} || die
     else
-	einfo "Creating PKGDIR=${E_PKGDIR}"
-	mkdir -p ${E_PKGDIR}
+	einfo "Creating PKGDIR=${target_pkgdir}"
+	mkdir -p ${EROOT%/}/${target_pkgdir}
     fi
 
     # chroot mounts
