@@ -63,7 +63,7 @@ if [[ ! ${_EBOOTSTRAP_FUNCTIONS} ]]; then
 get-stage3-uri() {
     debug-print-function ${FUNCNAME} "${@}"
 
-    local src="${1}" dest="${DISTDIR}/${1##*/}"
+    local src="${1}" dest="${EBOOTSTRAP_CACHE}/${1##*/}"
     local cache_age=0
 
     if [[ -f "${dest}" ]]; then
@@ -76,7 +76,7 @@ get-stage3-uri() {
         # we use -N here to overwrite the existing file, but we touch
         # the file timestamp if the download was successful rather than
         # keeping the http file timestamp
-        #wget -N "${src}" -P "${DISTDIR}" >&2 && touch "${dest}"
+        #wget -N "${src}" -P "${EBOOTSTRAP_CACHE}" >&2 && touch "${dest}"
         wget --no-use-server-timestamps "${src}" -O "${dest}" >&2
     fi
     local stage3_latest=$(tail -n1 "${dest}" | cut -d' ' -f1)
@@ -108,8 +108,8 @@ ebootstrap-fetch() {
 
     debug-print "SRC_URI=\"${SRC_URI}\""
 
-    [[ -d "${DISTDIR}" ]] || mkdir -p "${DISTDIR}" || \
-        die "ERROR: failed creating ${DISTDIR}"
+    [[ -d "${EBOOTSTRAP_CACHE}" ]] || mkdir -p "${EBOOTSTRAP_CACHE}" || \
+        die "ERROR: failed creating ${EBOOTSTRAP_CACHE}"
 
     while read src; do
         # skip empty lines
@@ -117,9 +117,9 @@ ebootstrap-fetch() {
         [[ ${src##*/} == latest-stage3-*.txt ]] && src=$(get-stage3-uri "${src}")
         local dest="${src##*/}"
         debug-print "$src -> $dest"
-        if has force ${EBOOTSTRAP_FEATURES} || [[ ! -f "${DISTDIR}/${dest}" ]]; then
+        if has force ${EBOOTSTRAP_FEATURES} || [[ ! -f "${EBOOTSTRAP_CACHE}/${dest}" ]]; then
             einfo "Fetching ${src}"
-            wget "${src}" -O "${DISTDIR}/${dest}"
+            wget "${src}" -O "${EBOOTSTRAP_CACHE}/${dest}"
         fi
     done < <( echo "${SRC_URI}" )
 }
@@ -224,7 +224,7 @@ ebootstrap-unpack() {
         }
         # don't use portage unpack(); the handbook requires using the tar -p option
         einfo ">>> Unpacking ${f} into ${EROOT}"
-        tar -xpf "${DISTDIR}/${f}" -C "${EROOT}" || die "Failed extracting ${f}"
+        tar -xpf "${EBOOTSTRAP_CACHE}/${f}" -C "${EROOT}" || die "Failed extracting ${f}"
     done
 }
 
@@ -247,7 +247,7 @@ ebootstrap-unpack-alt() {
                 # fine? i.e. if the tarball has actually a parent dir.
                 mkdir -p "${destdir}" || die
                 tar -C "${destdir}" -x --strip-components 1 \
-                    -f "${DISTDIR}/${f}" || die
+                    -f "${EBOOTSTRAP_CACHE}/${f}" || die
                 ;;
             *)
                 debug-print "${FUNCNAME}: falling back to unpack for ${f}"

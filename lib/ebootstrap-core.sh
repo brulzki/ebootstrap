@@ -69,7 +69,7 @@ load-global-config() {
     fi
 
     # this should always be set... use default values otherwise
-    : ${DISTDIR:=/var/cache/ebootstrap}
+    : ${EBOOTSTRAP_CACHE:=/var/cache/ebootstrap}
     : ${REPOS_BASE:=/var/db/repos}
 }
 
