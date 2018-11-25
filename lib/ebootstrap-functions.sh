@@ -503,11 +503,14 @@ relative_name() {
 portageq() {
     case ${1} in
         get_repo_path)
-            /usr/bin/portageq repos_config ${2}/ | \
-                awk -v REPO="[${3}]" -e '
-                    BEGIN { x=0 }
-                    /^\[/ { if ($0==REPO) x=1; else x=0 }
-                    /^location/ { if (x==1) print $3 }'
+            [[ -z $3 ]] && { eerror "ERROR: insufficient parameters!"; return 3; }
+            for repo in ${@:3}; do
+                /usr/bin/portageq repos_config ${2}/ | \
+                    awk -v REPO="[${repo}]" -e '
+                        BEGIN { x=0 }
+                        /^\[/ { if ($0==REPO) x=1; else x=0 }
+                        /^location/ { if (x==1) print $3 }'
+            done
             ;;
         get_repos)
             /usr/bin/portageq repos_config ${2}/ | \
