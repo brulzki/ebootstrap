@@ -179,10 +179,10 @@ ebootstrap-emerge() {
 
     # Make PKGDIR and DISTDIR within the EROOT relative to the host root
     # Override repository paths to be relative to the host root
-    PKGDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq pkgdir 2> /dev/null)" \
-    DISTDIR="${EROOT}/$(PORTAGE_CONFIGROOT="${EROOT}" portageq distdir 2> /dev/null)" \
+    PKGDIR="${EROOT%/}/$(PORTAGE_CONFIGROOT="${EROOT%/}" portageq pkgdir 2> /dev/null)" \
+    DISTDIR="${EROOT%/}/$(PORTAGE_CONFIGROOT="${EROOT%/}" portageq distdir 2> /dev/null)" \
     PORTAGE_REPOSITORIES="$(__eroot-repos-config)" \
-    FEATURES="-news" /usr/bin/emerge --root=${EROOT} --config-root=${EROOT} ${EMERGE_OPTS} "$@"
+    FEATURES="-news" /usr/bin/emerge --root=${EROOT%/} --config-root=${EROOT%/} ${EMERGE_OPTS} "$@"
 }
 
 _EBOOTSTRAP_CORE=1
