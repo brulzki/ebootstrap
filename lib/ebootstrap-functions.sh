@@ -85,16 +85,16 @@ get-stage3-uri() {
 }
 
 ebootstrap-info() {
-    einfo "config=${config}"
-    einfo "DESCRIPTION=${DESCRIPTION}"
-    einfo "EROOT=${EROOT}"
-    einfo "ARCH=${ARCH}"
-    einfo "SRC_URI=${SRC_URI}"
-    einfo "IUSE=${IUSE}"
-    einfo "P=${P}"
-    einfo "PN=${PN}"
-    einfo "A=${A}"
-    einfo "S=${S}"
+    einfo "config=\"${config}\""
+    einfo "DESCRIPTION=\"${DESCRIPTION}\""
+    einfo "EROOT=\"${EROOT}\""
+    einfo "ARCH=\"${ARCH}\""
+    einfo "SRC_URI=\"${SRC_URI}\""
+    einfo "IUSE=\"${IUSE}\""
+    einfo "P=\"${P}\""
+    einfo "PN=\"${PN}\""
+    einfo "A=\"${A}\""
+    einfo "S=\"${S}\""
 }
 
 ebootstrap-fetch() {
