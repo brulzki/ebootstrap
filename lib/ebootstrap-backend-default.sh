@@ -18,6 +18,8 @@ inherit() {
         debug-print "*** Multiple Inheritence (Level: ${ECLASS_DEPTH})"
     fi
 
+    local -x ECLASS
+    local __export_funcs_var
     local location
     local potential_location
 
@@ -29,7 +31,7 @@ inherit() {
         location=""
         potential_location=""
 
-        export ECLASS="$1"
+        ECLASS="$1"
         __export_funcs_var=__export_functions_$ECLASS_DEPTH
         unset $__export_funcs_var
 
@@ -48,6 +50,10 @@ inherit() {
         source "${location}" || die "died sourcing $location in inherit()"
 
         if [[ -z ${_IN_INSTALL_QA_CHECK} ]]; then
+            # append vars to global variables
+            [[ -n "${IUSE}" ]] && E_IUSE+="${E_IUSE:+ }${IUSE}"
+            unset IUSE
+
             # define the exported functions
             if [[ -n ${!__export_funcs_var} ]] ; then
                 for x in ${!__export_funcs_var} ; do
@@ -112,6 +118,9 @@ ebootstrap-backend () {
 
     # load the config file
     source ${config}
+
+    # add in dependency info from eclasses
+    IUSE+="${IUSE:+ }${E_IUSE}"
 
     # export these for any portage utilities which may be called
     export DISTDIR

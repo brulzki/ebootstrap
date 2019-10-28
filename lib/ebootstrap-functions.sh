@@ -90,6 +90,7 @@ ebootstrap-info() {
     einfo "EROOT=${EROOT}"
     einfo "ARCH=${ARCH}"
     einfo "SRC_URI=${SRC_URI}"
+    einfo "IUSE=${IUSE}"
     einfo "P=${P}"
     einfo "PN=${PN}"
     einfo "A=${A}"
