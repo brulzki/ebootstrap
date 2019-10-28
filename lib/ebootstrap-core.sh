@@ -58,6 +58,26 @@ has() {
     return 1
 }
 
+__is_fn use || \
+use() {
+    local u=$1
+    local found=0
+
+    # if we got something like '!flag', then invert the return value
+    if [[ ${u:0:1} == "!" ]] ; then
+        u=${u:1}
+        found=1
+    fi
+
+    has ${u} ${EBOOTSTRAP_USE}
+    if has ${u} ${EBOOTSTRAP_USE} ; then
+        ret=${found}
+    else
+        ret=$((!found))
+    fi
+    return ${ret}
+}
+
 # helper functions
 
 load-global-config() {
