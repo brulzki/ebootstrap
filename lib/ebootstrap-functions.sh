@@ -38,6 +38,7 @@
 # E_PACKAGE_USE
 # E_PACKAGE_ACCEPT_KEYWORDS
 # E_PACKAGE_MASK
+# E_PACKAGE_UNMASK
 # E_PACKAGE_LICENSE
 #             - these are used to configure the corresponding
 #               file in /etc/portage/package.*
@@ -754,6 +755,9 @@ ebootstrap-configure-package-files() {
     fi
     if [[ -n ${E_PACKAGE_MASK} ]]; then
         preprocess-config-vars "${E_PACKAGE_MASK}" > ${EROOT}/etc/portage/package.mask
+    fi
+    if [[ -n ${E_PACKAGE_UNMASK} ]]; then
+        preprocess-config-vars "${E_PACKAGE_UNMASK}" > ${EROOT}/etc/portage/package.unmask
     fi
     if [[ -n ${E_PACKAGE_LICENSE} ]]; then
         preprocess-config-vars "${E_PACKAGE_LICENSE}" > ${EROOT}/etc/portage/package.license
