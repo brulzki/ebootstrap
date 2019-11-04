@@ -152,6 +152,20 @@ export EBOOTSTRAP_EROOT_LOCATIONS=( $(__eroot-locations) )
 config=$(find-config-file ${1})
 [[ $? == 0 ]] || die "${0##*/}: there are no configs to satisfy \"${1}\""
 
+# try to auto-detect an overlay
+if [[ ! -v EBOOTSTRAP_OVERLAY && -f "${1}"
+      && "${config}" == "$(readlink -m "${1}")" ]]; then
+    EBOOTSTRAP_OVERLAY="${config%/eroot/*}"
+    if [[ -d "${EBOOTSTRAP_OVERLAY}/eroot" ]]; then
+        # prepend the overlay to eroot locations
+        EBOOTSTRAP_EROOT_LOCATIONS=( "${EBOOTSTRAP_OVERLAY}"/eroot
+                                     "${EBOOTSTRAP_EROOT_LOCATIONS[@]}" )
+        einfo "Added overlay ${EBOOTSTRAP_OVERLAY}"
+    else
+        unset EBOOTSTRAP_OVERLAY
+    fi
+fi
+
 # only set EROOT if needed or a argument was passed in
 if [[ __args == 2 || -n ${2} ]]; then
     EROOT=$(readlink -m ${2}) || die "readlink target failed"
