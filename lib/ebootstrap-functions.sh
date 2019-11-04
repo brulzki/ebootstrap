@@ -716,9 +716,9 @@ ebootstrap-configure-make-conf() {
 
     if [[ -n "${E_PORTDIR}" ]]; then
         einfo "Setting make.conf PORTDIR to ${E_PORTDIR}"
-        # use egrep & GNU sed extended regexp (-r) here to match "#?"
+        # use egrep & sed extended regexp (-E) here to match "#?"
         if egrep -q "^#?PORTDIR=" ${MAKE_CONF}; then
-            sed -ri "s!^#?PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${MAKE_CONF}
+            sed -Ei "s!^#?PORTDIR=.*!PORTDIR=\"${E_PORTDIR}\"!" ${MAKE_CONF}
         else
             echo "PORTDIR=${E_PORTDIR}" >> ${MAKE_CONF}
         fi
