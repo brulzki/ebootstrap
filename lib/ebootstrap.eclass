@@ -36,7 +36,7 @@ fi
 
 S=${EROOT}
 
-EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_preinst pkg_config
+EXPORT_FUNCTIONS pkg_info src_unpack src_prepare src_configure src_install pkg_preinst pkg_config eroot_mountpoints
 
 #DEFAULT_REPO=${DEFAULT_REPO:-gentoo}
 : ${DEFAULT_REPO:=gentoo}
@@ -93,6 +93,12 @@ ebootstrap_pkg_preinst() {
 
 ebootstrap_pkg_config() {
 	ebootstrap-configure-system
+}
+
+ebootstrap_eroot_mountpoints() {
+	if [[ -f ${EROOT%/}/var/tmp/ebootstrap/mounts ]]; then
+		egrep -v '^#|^/dev|^/proc' ${EROOT%/}/var/tmp/ebootstrap/mounts
+	fi
 }
 
 # trace phase functions which have not been implemented

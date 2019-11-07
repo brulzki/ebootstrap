@@ -171,6 +171,9 @@ ebootstrap-backend () {
         clean)
             phases="clean"
             ;;
+        mountpoints)
+            phases="mountpoints"
+            ;;
         *)
             eerror "Invalid command: ${command}" && false
             ;;
@@ -188,6 +191,9 @@ ebootstrap-backend () {
                 # do not need to track the state of these actions
                 # there is no phase_func for these actions
                 ebootstrap-${action}
+                ;;
+            mountpoints)
+                eroot_${action}
                 ;;
             *)
                 # execute the current action if it has not already completed successfully

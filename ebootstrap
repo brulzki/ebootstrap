@@ -38,6 +38,9 @@ EOF
   --clean
           Clean the ebuild temporary files
 
+  --mountpoints
+          Outputs a list of mountpoints for TARGET
+
 Options:
   --debug (-d)
           Enables debug messages
@@ -65,7 +68,7 @@ load-global-config
 
 # command line parsing
 SHORT_OPTS="dh:"
-LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,arch:,debug,features:,force,nostage3,bare,hostname:,help"
+LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,mountpoints,arch:,debug,features:,force,nostage3,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -77,6 +80,10 @@ while true; do
     case "${1}" in
         --info|--fetch|--unpack|--install|--config|--clean|--prepare)
             action="${1##*-}"
+            ;;
+        --mountpoints)
+            action="${1##*-}"
+            EBOOTSTRAP_QUIET=1
             ;;
         -d|--debug)
             EBOOTSTRAP_DEBUG=1
@@ -160,7 +167,7 @@ if [[ ! -v EBOOTSTRAP_OVERLAY && -f "${1}"
         # prepend the overlay to eroot locations
         EBOOTSTRAP_EROOT_LOCATIONS=( "${EBOOTSTRAP_OVERLAY}"/eroot
                                      "${EBOOTSTRAP_EROOT_LOCATIONS[@]}" )
-        einfo "Added overlay ${EBOOTSTRAP_OVERLAY}"
+        [[ ${EBOOTSTRAP_QUIET:-0} -eq 0 ]] && einfo "Added overlay ${EBOOTSTRAP_OVERLAY}"
     else
         unset EBOOTSTRAP_OVERLAY
     fi
@@ -185,6 +192,8 @@ case ${action} in
         ;;
     compile|test)
         ewarn "Running ebuild phase ${action}"
+        ;;
+    mountpoints)
         ;;
     *)
         ewarn "Trying unknown ebuild command: ${action}"
