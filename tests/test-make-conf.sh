@@ -5,15 +5,18 @@
 source test-lib.sh
 
 inherit ebootstrap
+source make-conf.sh
 
 setup() {
     EROOT=$(mktemp -d /tmp/test-XXXXX)
     mkdir ${EROOT}/etc
     #XXX this should be handled by generate-make-conf
     mkdir -p ${EROOT}/etc/portage
+    is_debug && echo "MAKE_CONF=${EROOT}/etc/portage/make.conf"
 }
 
 teardown() {
+    is_debug && { cat ${EROOT}/etc/portage/make.conf; printf "========\n"; }
     rm -rf ${EROOT}
     # clear env; these should be set within each test
     unset E_MAKE_CONF
@@ -22,8 +25,6 @@ teardown() {
 tbegin "Test where no config is defined"
 
 ebootstrap-configure-make-conf
-
-is_debug && cat ${EROOT}/etc/portage/make.conf
 
 assert "file exists" '
     [[ -f ${EROOT}/etc/portage/make.conf ]]
@@ -50,8 +51,6 @@ E_MAKE_CONF="
 "
 ebootstrap-configure-make-conf
 
-is_debug && cat ${EROOT}/etc/portage/make.conf
-
 assert "config is defined (with quotes added)" '
     grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
 '
@@ -65,8 +64,6 @@ E_MAKE_CONF="
 "
 echo "MARKER=1" > ${EROOT}/etc/portage/make.conf
 ebootstrap-configure-make-conf
-
-is_debug && cat ${EROOT}/etc/portage/make.conf
 
 assert "initial content still exists" '
     grep -q "^MARKER=1$" ${EROOT}/etc/portage/make.conf
@@ -85,14 +82,34 @@ E_MAKE_CONF="
 echo "HELLO=goodbye" > ${EROOT}/etc/portage/make.conf
 ebootstrap-configure-make-conf
 
-is_debug && cat ${EROOT}/etc/portage/make.conf
-
 assert "initial content gone" '
     grep -q "^HELLO=goodbye$" ${EROOT}/etc/portage/make.conf
     [[ $? == 1 ]]
 '
+assert "new config is present" '
+    grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test passing comments through"
+
+E_MAKE_CONF="
+    # comment
+    HELLO=world
+    # goodbye
+"
+echo "HELLO=goodbye" > ${EROOT}/etc/portage/make.conf
+ebootstrap-configure-make-conf
+
+assert "comment remains" '
+    grep -q "^# comment$" ${EROOT}/etc/portage/make.conf
+'
 assert "config is appended" '
     grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "2nd comment remains" '
+    grep -q "^# goodbye$" ${EROOT}/etc/portage/make.conf
 '
 tend
 
@@ -104,8 +121,6 @@ E_MAKE_CONF="
 "
 ebootstrap-configure-make-conf
 ebootstrap-configure-make-conf
-
-is_debug && cat ${EROOT}/etc/portage/make.conf
 
 assert "config is defined only once" '
     [[ $(grep "^HELLO=\"world\"" ${EROOT}/etc/portage/make.conf | wc -l) == 1 ]]
