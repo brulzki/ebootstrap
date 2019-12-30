@@ -137,3 +137,32 @@ assert "config is defined only once" '
 '
 tend
 
+#
+tbegin "Test E_PORTDIR variable processing"
+
+E_PORTDIR="e-portdir" ebootstrap-configure-make-conf
+
+assert "check PORTDIR is set" '
+    grep -q "^PORTDIR=\"e-portdir\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test E_PKGDIR variable processing"
+
+E_PKGDIR="e-pkgdir" ebootstrap-configure-make-conf
+
+assert "check PKGDIR is set" '
+    grep -q "^PKGDIR=\"e-pkgdir\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test E_DISTDIR variable processing"
+
+E_DISTDIR="e-distdir" ebootstrap-configure-make-conf
+
+assert "check DISTDIR is set" '
+    grep -q "^DISTDIR=\"e-distdir\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
