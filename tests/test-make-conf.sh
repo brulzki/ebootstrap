@@ -29,6 +29,16 @@ ebootstrap-configure-make-conf
 assert "file exists" '
     [[ -f ${EROOT}/etc/portage/make.conf ]]
 '
+# check for the default expected variables
+assert "check default PORTDIR" '
+    grep -q "^PORTDIR=\"/var/db/repos/gentoo\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check default PKGDIR" '
+    grep -q "^PKGDIR=\"/var/cache/binpkg\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check default DISTDIR" '
+    grep -q "^DISTDIR=\"/var/cache/distfiles\"$" ${EROOT}/etc/portage/make.conf
+'
 tend
 
 #E_MAKE_CONF="
