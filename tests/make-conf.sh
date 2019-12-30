@@ -6,6 +6,8 @@ ebootstrap-configure-make-conf() {
     local vars=()
     local line
     local append=()
+    local e_vars=()
+    local v
 
     if [[ ! -v MAKE_CONF_DEFAULT ]]; then
         local MAKE_CONF_DEFAULT="
@@ -28,6 +30,12 @@ ebootstrap-configure-make-conf() {
         esac
     done < "${MAKE_CONF}"
 
+    # pre-process the E_xxxxDIR overrides
+    for v in PORTDIR PKGDIR DISTDIR; do
+        local n="E_${v}"
+        [[ -v E_${v} ]] && e_vars+=( "${v}=${!n}" )
+    done
+
     # generate and process sed edits to the default config
     {
         while read line; do
@@ -43,7 +51,8 @@ ebootstrap-configure-make-conf() {
                     append+=( "${line}" )
                     ;;
             esac
-        done <<< "${E_MAKE_CONF}"
+        done <<< $(printf "%s\n" "${E_MAKE_CONF}" "${e_vars[@]}")
+
         if [[ ${#append[@]} > 0 ]]; then
             printf "$ {\n"
             printf "  a %s\n" "${append[@]}"
@@ -53,5 +62,4 @@ ebootstrap-configure-make-conf() {
     #} >> ${MAKE_CONF}
     #} |tee /dev/stderr | sed -i -f - ${MAKE_CONF}
     } | sed -i -f - ${MAKE_CONF}
-
 }
