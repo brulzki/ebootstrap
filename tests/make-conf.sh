@@ -24,10 +24,23 @@ ebootstrap-configure-make-conf() {
     local v
 
     if [[ ! -v MAKE_CONF_DEFAULT ]]; then
+        # this is based on the defaults created by catalyst stage3
         local MAKE_CONF_DEFAULT="
+                  # Please consult /usr/share/portage/config/make.conf.example for a more
+                  # detailed example.
+                  COMMON_FLAGS=\"-O2 -pipe\"
+                  CFLAGS=\"\${COMMON_FLAGS}\"
+                  CXXFLAGS=\"\${COMMON_FLAGS}\"
+                  FCFLAGS=\"\${COMMON_FLAGS}\"
+                  FFLAGS=\"\${COMMON_FLAGS}\"
+
                   PORTDIR=\"/var/db/repos/gentoo\"
                   PKGDIR=\"/var/cache/binpkg\"
-                  DISTDIR=\"/var/cache/distfiles\""
+                  DISTDIR=\"/var/cache/distfiles\"
+
+                  # This sets the language of build output to English.
+                  # Please keep this setting intact when reporting bugs.
+                  LC_MESSAGES=C"
     fi
 
     if [[ ! -f ${MAKE_CONF} ]]; then
