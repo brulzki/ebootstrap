@@ -74,4 +74,11 @@ ebootstrap-configure-make-conf() {
             printf "}\n"
         fi
     } | sed -i -f - ${MAKE_CONF}
+
+    # create the directories defined in the final config
+    local d
+    for v in PORTDIR PKGDIR DISTDIR; do
+        local d=$(. ${MAKE_CONF} >/dev/null 2>&1; echo "${!v}")
+        [[ -n ${d} ]] && mkdir -p ${EROOT}/${d}
+    done
 }

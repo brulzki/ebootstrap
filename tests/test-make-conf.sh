@@ -55,6 +55,16 @@ assert "check default PKGDIR" '
 assert "check default DISTDIR" '
     grep -q "^DISTDIR=\"/var/cache/distfiles\"$" ${EROOT}/etc/portage/make.conf
 '
+# check that the directories have been created
+assert "PORTDIR exists" '
+    [[ -d ${EROOT}/var/db/repos/gentoo ]]
+'
+assert "PKGDIR exists" '
+    [[ -d ${EROOT}/var/cache/binpkg ]]
+'
+assert "DISTDIR exists" '
+    [[ -d ${EROOT}/var/cache/distfiles ]]
+'
 tend
 
 #E_MAKE_CONF="
