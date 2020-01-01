@@ -2,6 +2,25 @@
 # Copyright 2019 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+# ebootstrap-configure-make-conf
+#
+# Generates the portage configuration in /etc/portage/make.conf. If
+# the file already exists, the settings are updated as required,
+# otherwise the file is created with the provided settings.
+#
+# Creates directories for PORTDIR, PKGDIR and DISTDIR.
+#
+# The config variables processed by this are:
+#
+# E_MAKE_CONF - sets the default config file content/settings
+#
+# E_PORTDIR   - override the config values
+# E_DISTDIR   .
+# E_PKGDIR    .
+
+# TODO: confirm if we need to still create the directories from here
+# (old function did this if E_*DIR variables exist)
+
 source test-lib.sh
 
 inherit ebootstrap

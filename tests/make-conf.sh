@@ -1,5 +1,19 @@
 
-
+# ebootstrap-configure-make-conf
+#
+# Generates the portage configuration in /etc/portage/make.conf. If
+# the file already exists, the settings are updated as required,
+# otherwise the file is created with the provided settings.
+#
+# Creates directories for PORTDIR, PKGDIR and DISTDIR.
+#
+# The config variables processed by this are:
+#
+# E_MAKE_CONF - sets the default config file content/settings
+#
+# E_PORTDIR   - override the config values
+# E_DISTDIR   .
+# E_PKGDIR    .
 ebootstrap-configure-make-conf() {
     local MAKE_CONF=${EROOT}/etc/portage/make.conf
     local config=()
@@ -30,7 +44,7 @@ ebootstrap-configure-make-conf() {
         esac
     done < "${MAKE_CONF}"
 
-    # pre-process the E_xxxxDIR overrides
+    # pre-process the portage override vars
     for v in PORTDIR PKGDIR DISTDIR; do
         local n="E_${v}"
         [[ -v E_${v} ]] && e_vars+=( "${v}=${!n}" )
@@ -58,8 +72,5 @@ ebootstrap-configure-make-conf() {
             printf "  a %s\n" "${append[@]}"
             printf "}\n"
         fi
-        
-    #} >> ${MAKE_CONF}
-    #} |tee /dev/stderr | sed -i -f - ${MAKE_CONF}
     } | sed -i -f - ${MAKE_CONF}
 }
