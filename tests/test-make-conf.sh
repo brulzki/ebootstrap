@@ -24,7 +24,6 @@
 source test-lib.sh
 
 inherit ebootstrap
-source make-conf.sh
 
 setup() {
     EROOT=$(mktemp -d /tmp/test-XXXXX)
