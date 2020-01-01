@@ -28,9 +28,6 @@ source make-conf.sh
 
 setup() {
     EROOT=$(mktemp -d /tmp/test-XXXXX)
-    mkdir ${EROOT}/etc
-    #XXX this should be handled by generate-make-conf
-    mkdir -p ${EROOT}/etc/portage
     is_debug && echo "MAKE_CONF=${EROOT}/etc/portage/make.conf"
 }
 
@@ -91,6 +88,7 @@ tbegin "Test existing content is appended to"
 E_MAKE_CONF="
     HELLO=world
 "
+mkdir -p ${EROOT}/etc/portage
 echo "MARKER=1" > ${EROOT}/etc/portage/make.conf
 ebootstrap-configure-make-conf
 
@@ -108,6 +106,7 @@ tbegin "Test existing content is updated"
 E_MAKE_CONF="
     HELLO=world
 "
+mkdir -p ${EROOT}/etc/portage
 echo "HELLO=goodbye" > ${EROOT}/etc/portage/make.conf
 ebootstrap-configure-make-conf
 
@@ -128,6 +127,7 @@ E_MAKE_CONF="
     HELLO=world
     # goodbye
 "
+mkdir -p ${EROOT}/etc/portage
 echo "HELLO=goodbye" > ${EROOT}/etc/portage/make.conf
 ebootstrap-configure-make-conf
 
