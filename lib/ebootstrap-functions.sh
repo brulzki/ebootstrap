@@ -706,7 +706,7 @@ ebootstrap-configure-make-conf() {
 
     if [[ ! -v MAKE_CONF_DEFAULT ]]; then
         # this is based on the defaults created by catalyst stage3
-        local MAKE_CONF_DEFAULT="
+        local MAKE_CONF_DEFAULT="${E_MAKE_CONF:-"
                   # Please consult /usr/share/portage/config/make.conf.example for a more
                   # detailed example.
                   COMMON_FLAGS=\"-O2 -pipe\"
@@ -721,7 +721,7 @@ ebootstrap-configure-make-conf() {
 
                   # This sets the language of build output to English.
                   # Please keep this setting intact when reporting bugs.
-                  LC_MESSAGES=C"
+                  LC_MESSAGES=C"}"
     fi
 
     if [[ ! -f ${MAKE_CONF} ]]; then
@@ -751,7 +751,7 @@ ebootstrap-configure-make-conf() {
             case "${line}" in
                 *=*)
                     if has "${line%=*}" "${vars[@]}"; then
-                        printf "s/^${line%=*}=.*$/${line%=*}=${line#*=}/\n"
+                        printf "s@^${line%=*}=.*\$@${line%=*}=${line#*=}@\n"
                     else
                         append+=( "${line}" )
                     fi
