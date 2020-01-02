@@ -751,19 +751,28 @@ ebootstrap-configure-make-conf() {
             case "${line}" in
                 *=*)
                     if has "${line%=*}" "${vars[@]}"; then
-                        printf "s/^${line%=*}=.*$/${line%=*}=\"${line#*=}\"/\n"
+                        printf "s/^${line%=*}=.*$/${line%=*}=${line#*=}/\n"
                     else
-                        append+=( "${line%=*}=\"${line#*=}\"" )
+                        append+=( "${line}" )
                     fi
                     ;;
                 *)
                     append+=( "${line}" )
                     ;;
             esac
-        done <<< $(printf "%s\n" "${E_MAKE_CONF}" "${e_vars[@]}")
+        done <<< $(preprocess-make-conf-vars "${E_MAKE_CONF}" "${e_vars[@]}")
+
+        # strip initial blank appended lines (trailing blank lines are
+        # already removed by preprocess-make-conf-vars)
+        for i in "${!append[@]}"; do
+            [[ -n "${append[i]}" ]] && continue
+            unset 'append[i]'
+        done
 
         if [[ ${#append[@]} > 0 ]]; then
             printf "$ {\n"
+            # add a separator if the current make.conf is not empty
+            [[ ${#vars[@]} > 0 ]] && printf "  a\n"
             printf "  a %s\n" "${append[@]}"
             printf "}\n"
         fi
