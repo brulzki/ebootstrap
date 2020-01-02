@@ -34,7 +34,7 @@ teardown() {
     is_debug && { cat ${EROOT}/etc/portage/make.conf; printf "========\n"; }
     rm -rf ${EROOT}
     # clear env; these should be set within each test
-    unset E_MAKE_CONF E_MAKE_OVERRIDES
+    unset E_MAKE_CONF E_MAKE_OVERRIDES E_PORTDIR E_PKGDIR E_DISTDIR
 }
 
 #
@@ -268,5 +268,62 @@ ebootstrap-configure-make-conf
 
 assert "check PORTDIR is updated" '
     grep -q "^PORTDIR=\"/usr/portage\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test E_*DIR precedence over E_MAKE_OVERRIDES"
+
+E_MAKE_OVERRIDES="
+    PORTDIR=/usr/portage
+    PKGDIR=/usr/portage/packages
+    DISTDIR=/usr/portage/distfiles
+"
+E_PORTDIR="/var/portdir"
+E_PKGDIR="/var/pkgdir"
+E_DISTDIR="/var/distdir"
+ebootstrap-configure-make-conf
+
+assert "check E_PORTDIR precedence" '
+    grep -q "^PORTDIR=\"/var/portdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check E_PKGDIR precedence" '
+    grep -q "^PKGDIR=\"/var/pkgdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check E_DISTDIR precedence" '
+    grep -q "^DISTDIR=\"/var/distdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "dirs are only defined once each" '
+    [[ $(egrep "^(PORT|PKG|DIST)DIR=" ${EROOT}/etc/portage/make.conf | wc -l) == 3 ]]
+'
+tend
+
+#
+tbegin "Test E_*DIR precedence over E_MAKE_OVERRIDES - empty defaults"
+
+E_MAKE_CONF="
+    PORTDIR=blah
+"
+E_MAKE_OVERRIDES="
+    PORTDIR=/usr/portage
+    PKGDIR=/usr/portage/packages
+    DISTDIR=/usr/portage/distfiles
+"
+E_PORTDIR="/var/portdir"
+E_PKGDIR="/var/pkgdir"
+E_DISTDIR="/var/distdir"
+ebootstrap-configure-make-conf
+
+assert "check E_PORTDIR precedence" '
+    grep -q "^PORTDIR=\"/var/portdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check E_PKGDIR precedence" '
+    grep -q "^PKGDIR=\"/var/pkgdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check E_DISTDIR precedence" '
+    grep -q "^DISTDIR=\"/var/distdir\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "dirs are only defined once each" '
+    [[ $(egrep "^(PORT|PKG|DIST)DIR=" ${EROOT}/etc/portage/make.conf | wc -l) == 3 ]]
 '
 tend
