@@ -707,10 +707,8 @@ ebootstrap-configure-profile() {
 ebootstrap-configure-make-conf() {
     local MAKE_CONF=${EROOT}/etc/portage/make.conf
     local vars=()
+    local overrides=()
     local line
-    local append=()
-    local e_vars=()
-    local v
 
     if [[ ! -v MAKE_CONF_DEFAULT ]]; then
         # this is based on the defaults created by catalyst stage3
@@ -748,35 +746,43 @@ ebootstrap-configure-make-conf() {
     done < "${MAKE_CONF}"
 
     # pre-process the portage override vars
+    local v
     for v in PORTDIR PKGDIR DISTDIR; do
         local n="E_${v}"
-        [[ -v E_${v} ]] && e_vars+=( "${v}=${!n}" )
+        [[ -v E_${v} ]] && overrides+=( "${v}=${!n}" )
     done
 
-    # generate and process sed edits to the default config
+    # generate sed edit rules to the default config
+    local -A subst
+    local -A append
+    local i=0
+    while read line; do
+        case "${line}" in
+            *=*)
+                if has "${line%=*}" "${vars[@]}"; then
+                    subst[${line%=*}]="s@^${line%=*}=.*\$@${line%=*}=${line#*=}@"
+                else
+                    append[${line%=*}]="${line}"
+                fi
+                ;;
+            *)
+                append[$(( i++ ))]="${line}"
+                ;;
+        esac
+    done <<< $(preprocess-make-conf-vars "${E_MAKE_CONF}" "${E_MAKE_OVERRIDES}" "${overrides[@]}")
+
+    # strip initial blank appended lines (trailing blank lines are
+    # already removed by preprocess-make-conf-vars)
+    for i in "${!append[@]}"; do
+        [[ -n "${append[$i]}" ]] && continue
+        unset 'append[$i]'
+    done
+
+    # process sed rules to update make.conf
     {
-        while read line; do
-            case "${line}" in
-                *=*)
-                    if has "${line%=*}" "${vars[@]}"; then
-                        printf "s@^${line%=*}=.*\$@${line%=*}=${line#*=}@\n"
-                    else
-                        append+=( "${line}" )
-                    fi
-                    ;;
-                *)
-                    append+=( "${line}" )
-                    ;;
-            esac
-        done <<< $(preprocess-make-conf-vars "${E_MAKE_CONF}" "${E_MAKE_OVERRIDES}" "${e_vars[@]}")
-
-        # strip initial blank appended lines (trailing blank lines are
-        # already removed by preprocess-make-conf-vars)
-        for i in "${!append[@]}"; do
-            [[ -n "${append[i]}" ]] && continue
-            unset 'append[i]'
+        for i in "${!subst[@]}"; do
+            printf "%s\n" "${subst[$i]}"
         done
-
         if [[ ${#append[@]} > 0 ]]; then
             printf "$ {\n"
             # add a separator if the current make.conf is not empty
@@ -787,7 +793,6 @@ ebootstrap-configure-make-conf() {
     } | sed -i -f - ${MAKE_CONF}
 
     # create the directories defined in the final config
-    local d
     for v in PORTDIR PKGDIR DISTDIR; do
         local d=$(. ${MAKE_CONF} >/dev/null 2>&1; echo "${!v}")
         [[ -n ${d} ]] && mkdir -p ${EROOT}/${d}
