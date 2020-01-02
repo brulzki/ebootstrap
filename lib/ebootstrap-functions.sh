@@ -35,6 +35,10 @@
 # E_PKGDIR    .
 #             - override the config in /etc/portage/make.conf
 #
+# E_MAKE_OVERRIDES
+#             - generic method for setting or adding a value to the
+#               make.conf file, without affecting the default content
+#
 # E_PACKAGE_USE
 # E_PACKAGE_ACCEPT_KEYWORDS
 # E_PACKAGE_MASK
@@ -696,6 +700,10 @@ ebootstrap-configure-profile() {
 # E_PORTDIR   - override the config values
 # E_PKGDIR    .
 # E_DISTDIR   .
+#
+# E_MAKE_OVERRIDES - generic method for setting or adding a value to
+#                    the make.conf file, without affecting the default
+#                    content
 ebootstrap-configure-make-conf() {
     local MAKE_CONF=${EROOT}/etc/portage/make.conf
     local vars=()
@@ -760,7 +768,7 @@ ebootstrap-configure-make-conf() {
                     append+=( "${line}" )
                     ;;
             esac
-        done <<< $(preprocess-make-conf-vars "${E_MAKE_CONF}" "${e_vars[@]}")
+        done <<< $(preprocess-make-conf-vars "${E_MAKE_CONF}" "${E_MAKE_OVERRIDES}" "${e_vars[@]}")
 
         # strip initial blank appended lines (trailing blank lines are
         # already removed by preprocess-make-conf-vars)

@@ -34,9 +34,10 @@ teardown() {
     is_debug && { cat ${EROOT}/etc/portage/make.conf; printf "========\n"; }
     rm -rf ${EROOT}
     # clear env; these should be set within each test
-    unset E_MAKE_CONF
+    unset E_MAKE_CONF E_MAKE_OVERRIDES
 }
 
+#
 tbegin "Test where no config is defined"
 
 ebootstrap-configure-make-conf
@@ -216,5 +217,56 @@ assert "correct number of setting in make.conf" '
 # Total number of lines (allows for added header)
 assert "correct number of lines in make.conf" '
     [[ $(wc -l < ${EROOT}/etc/portage/make.conf) == 10 ]]
+'
+tend
+
+#
+tbegin "Test E_MAKE_OVERRIDES are appended to default config"
+
+E_MAKE_OVERRIDES="
+    HELLO=world
+"
+ebootstrap-configure-make-conf
+
+# check the default variables are still there
+for v in PORTDIR PKGDIR DISTDIR; do
+    assert "config contains ${v}" '
+        grep -q "^${v}=" ${EROOT}/etc/portage/make.conf
+    '
+done
+assert "new config is present" '
+    grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test existing content is updated by E_MAKE_OVERRIDES"
+
+E_MAKE_OVERRIDES="
+    HELLO=world
+"
+mkdir -p ${EROOT}/etc/portage
+echo "HELLO=goodbye" > ${EROOT}/etc/portage/make.conf
+ebootstrap-configure-make-conf
+
+assert "initial content gone" '
+    grep -q "^HELLO=goodbye$" ${EROOT}/etc/portage/make.conf
+    [[ $? == 1 ]]
+'
+assert "new config is present" '
+    grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test E_MAKE_OVERRIDES updates defaults"
+
+E_MAKE_OVERRIDES="
+    PORTDIR=/usr/portage
+"
+ebootstrap-configure-make-conf
+
+assert "check PORTDIR is updated" '
+    grep -q "^PORTDIR=\"/usr/portage\"$" ${EROOT}/etc/portage/make.conf
 '
 tend
