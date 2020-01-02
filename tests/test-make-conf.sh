@@ -66,18 +66,6 @@ assert "DISTDIR exists" '
 '
 tend
 
-#E_MAKE_CONF="
-#       USE=bindist
-#
-#       PKGDIR=${E_PKGDIR:-/var/cache/packages}
-#       DISTDIR=${E_DISTDIR:-/var/cache/distfiles}
-#
-#       FEATURES=getbinpkg
-#       EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
-#       PORTAGE_BINHOST=http://binpkg.example.com/packages/${PN}-${ARCH}
-#"
-
-#
 #
 tbegin "Test with config defined"
 
@@ -88,6 +76,10 @@ ebootstrap-configure-make-conf
 
 assert "config is defined (with quotes added)" '
     grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
+'
+# HELLO should be the only variable defined in make.conf
+assert "the config from E_MAKE_CONF is the default" '
+    [[ $(grep "=" ${EROOT}/etc/portage/make.conf | wc -l) == 1 ]]
 '
 tend
 
@@ -192,5 +184,37 @@ E_DISTDIR="e-distdir" ebootstrap-configure-make-conf
 
 assert "check DISTDIR is set" '
     grep -q "^DISTDIR=\"e-distdir\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test with a realistic config"
+
+# adapted from a sample eroot config
+E_MAKE_CONF="
+       USE=bindist
+
+       PKGDIR=/var/cache/binpkg
+       DISTDIR=/var/cache/distfiles
+
+       FEATURES=getbinpkg
+       EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
+       PORTAGE_BINHOST=http://binpkg.example.com/packages/${PN}-${ARCH}
+"
+
+ebootstrap-configure-make-conf
+
+# check the predefined variables are still there
+for v in USE PKGDIR DISTDIR FEATURES EMERGE_DEFAULT_OPTS PORTAGE_BINHOST; do
+    assert "config contains ${v}" '
+        grep -q "^${v}=" ${EROOT}/etc/portage/make.conf
+    '
+done
+assert "correct number of setting in make.conf" '
+    [[ $(grep "=" ${EROOT}/etc/portage/make.conf | wc -l) == 6 ]]
+'
+# Total number of lines (allows for added header)
+assert "correct number of lines in make.conf" '
+    [[ $(wc -l < ${EROOT}/etc/portage/make.conf) == 10 ]]
 '
 tend
