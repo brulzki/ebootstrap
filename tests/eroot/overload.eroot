@@ -1,0 +1,20 @@
+# Copyright (c) 2015-2020 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=eroot-0
+
+inherit ebootstrap trace
+
+DESCRIPTION="This is a test stage ebuild for ebootstrap"
+HOMEPAGE="http://github.com/brulzki/ebootstrap"
+SLOT="0"
+KEYWORDS="ebootstrap"
+
+# this is a test case for overloading functions defined locally in the
+# eroot config file
+
+pkg_info() {
+	einfo "This is a new pkg_info()"
+	einfo "========"
+	ebootstrap_pkg_info
+}

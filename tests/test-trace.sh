@@ -24,3 +24,18 @@ assert "ebootstrap runs without errors" '
 '
 
 tend
+
+#
+tbegin "Test overload.eroot"
+
+output=$(../ebootstrap --info eroot/overload.eroot ${EROOT} 2>&1)
+status=$?
+
+assert "ebootstrap runs without errors" '
+    [[ $status == 0 ]]
+'
+assert "overloaded pkg_info() has been run" '
+    grep -q "^This is a new pkg_info()$" <<< ${output}
+'
+
+tend
