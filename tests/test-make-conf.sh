@@ -327,3 +327,22 @@ assert "dirs are only defined once each" '
     [[ $(egrep "^(PORT|PKG|DIST)DIR=" ${EROOT}/etc/portage/make.conf | wc -l) == 3 ]]
 '
 tend
+
+#
+tbegin "Test value containing ="
+
+E_MAKE_CONF="
+    EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
+"
+ebootstrap-configure-make-conf
+
+assert "check E_DISTDIR precedence" '
+    grep -q "^EMERGE_DEFAULT_OPTS=\"--usepkgonly --ignore-built-slot-operator-deps=y\"$" ${EROOT}/etc/portage/make.conf
+'
+# fails on the 2nd pass through
+ebootstrap-configure-make-conf
+
+assert "check E_DISTDIR precedence" '
+    grep -q "^EMERGE_DEFAULT_OPTS=\"--usepkgonly --ignore-built-slot-operator-deps=y\"$" ${EROOT}/etc/portage/make.conf
+'
+tend

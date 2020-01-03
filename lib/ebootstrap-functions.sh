@@ -743,7 +743,7 @@ ebootstrap-configure-make-conf() {
     while read line; do
         case "${line}" in
             *=*)
-                vars+=( "${line%=*}" )
+                vars+=( "${line%%=*}" )
                 ;;
         esac
     done < "${MAKE_CONF}"
@@ -762,10 +762,10 @@ ebootstrap-configure-make-conf() {
     while read line; do
         case "${line}" in
             *=*)
-                if has "${line%=*}" "${vars[@]}"; then
-                    subst[${line%=*}]="s@^${line%=*}=.*\$@${line%=*}=${line#*=}@"
+                if has "${line%%=*}" "${vars[@]}"; then
+                    subst[${line%%=*}]="s@^${line%%=*}=.*\$@${line%%=*}=${line#*=}@"
                 else
-                    append[${line%=*}]="${line}"
+                    append[${line%%=*}]="${line}"
                 fi
                 ;;
             *)
