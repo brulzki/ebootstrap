@@ -1,7 +1,6 @@
-# Copyright (c) 2018 Bruce Schultz <brulzki@gmail.com>
+# Copyright (c) 2018-2020 Bruce Schultz <brulzki@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-#.PHONY: all
 all:
 
 PREFIX ?= /usr
@@ -9,7 +8,6 @@ INSTALL ?= install
 bindir ?= $(PREFIX)/bin
 libdir ?= $(PREFIX)/lib/ebootstrap
 
-#.PHONY: install
 install:
 	mkdir -m 755 -p $(DESTDIR)$(libdir)
 	mkdir -m 755 -p $(DESTDIR)$(bindir)
@@ -24,4 +22,8 @@ install:
 	sed 's!^EBOOTSTRAP_LIB=.*/lib$$!EBOOTSTRAP_LIB=$(libdir)!' ebootstrap > $(DESTDIR)$(bindir)/ebootstrap
 	chmod 755 $(DESTDIR)$(bindir)/ebootstrap
 
-.PHONY: all install
+### test rules
+test:
+	$(MAKE) -C tests/ all
+
+.PHONY: all install test
