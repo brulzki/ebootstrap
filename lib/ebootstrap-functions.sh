@@ -802,22 +802,27 @@ ebootstrap-configure-make-conf() {
     done
 }
 
+# ebootstrap-configure-package-files
+#
+# Generates the portage configuration in /etc/portage/package.*.
+#
+# The config variables processed by this are:
+#
+# E_PACKAGE_ACCEPT_KEYWORDS
+# E_PACKAGE_USE
+# E_PACKAGE_MASK
+# E_PACKAGE_UNMASK
+# E_PACKAGE_LICENSE
 ebootstrap-configure-package-files() {
-    if [[ -n ${E_PACKAGE_ACCEPT_KEYWORDS} ]]; then
-        preprocess-config-vars "${E_PACKAGE_ACCEPT_KEYWORDS}" > ${EROOT}/etc/portage/package.accept_keywords
-    fi
-    if [[ -n ${E_PACKAGE_USE} ]]; then
-        preprocess-config-vars "${E_PACKAGE_USE}" > ${EROOT}/etc/portage/package.use
-    fi
-    if [[ -n ${E_PACKAGE_MASK} ]]; then
-        preprocess-config-vars "${E_PACKAGE_MASK}" > ${EROOT}/etc/portage/package.mask
-    fi
-    if [[ -n ${E_PACKAGE_UNMASK} ]]; then
-        preprocess-config-vars "${E_PACKAGE_UNMASK}" > ${EROOT}/etc/portage/package.unmask
-    fi
-    if [[ -n ${E_PACKAGE_LICENSE} ]]; then
-        preprocess-config-vars "${E_PACKAGE_LICENSE}" > ${EROOT}/etc/portage/package.license
-    fi
+    local dest x v
+    for x in accept_keywords use mask unmask license; do
+        v=E_PACKAGE_${x^^}
+        if [[ -n ${!v} ]]; then
+            dest="${EROOT}/etc/portage/package.${x}"
+            [[ -d ${dest} ]] && dest+=/ebootstrap
+            preprocess-config-vars "${!v}" > ${dest}
+        fi
+    done
 }
 
 ebootstrap-configure-portage() {
