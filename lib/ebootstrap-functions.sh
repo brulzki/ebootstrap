@@ -839,14 +839,14 @@ ebootstrap-configure-package-files() {
 
 ebootstrap-configure-portage() {
     # configure stuff in /etc/portage
+    # - make.conf
     # - repos.conf
     # - make.profile
-    # - make.conf
     # - package.*
 
+    ebootstrap-configure-make-conf
     ebootstrap-configure-repos
     ebootstrap-configure-profile
-    ebootstrap-configure-make-conf
     ebootstrap-configure-package-files
 }
 
