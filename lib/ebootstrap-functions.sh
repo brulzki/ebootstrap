@@ -456,7 +456,7 @@ ebootstrap-install() {
     # ensure locales are updated
     ebootstrap-locale-gen --rebuild
 
-    ebootstrap-chroot-emerge -u1 @world || die "Failed merging @world"
+    ebootstrap-chroot-emerge -uDN1 @world || die "Failed merging @world"
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
