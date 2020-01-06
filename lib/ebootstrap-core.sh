@@ -162,7 +162,9 @@ __eroot-repos-config() {
     # If the repo which contains the host's profile is not also included in
     # the eroot profiles, then the host profile cannot be found.
 
-    # loop through the unique local repos referenced in the profile parents
+    # loop through the unique local repos referenced in the profile
+    # parents; these must be referenced in the repos list so that
+    # emerge can resolve the host profile
     local profiles=( $(get-profile) )
     local eroot_repos="$(portageq get_repos ${EROOT%/})"
     for r in $(printf "%s\n" "${profiles[@]%%:*}" | sort -u); do
