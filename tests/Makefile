@@ -13,7 +13,7 @@ all: test
 test: $(TESTS)
 
 $(TESTS):
-	@echo "*** $@"
+	@echo ">>> $@"
 	@$(RUNTEST) $@
 
 .PHONY: all test $(TESTS)

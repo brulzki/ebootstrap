@@ -26,4 +26,7 @@ install:
 test:
 	$(MAKE) -C tests/ all
 
-.PHONY: all install test
+tests/*:
+	@$(MAKE) -C tests/ $(subst tests/,,$@)
+
+.PHONY: all install test tests/*
