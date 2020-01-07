@@ -437,26 +437,45 @@ ebootstrap-rc-update() {
     ebootstrap-chroot rc-update "$@"
 }
 
+__install_opts() {
+    local nostage3=$(has nostage3 ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+    local buildpkg=$(has buildpkg ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+    local usepkg=$(has usepkg ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+
+    ((  nostage3 & ~buildpkg & ~usepkg )) && echo "--usepkgonly"
+    ((  nostage3 &  buildpkg & ~usepkg )) && echo "--buildpkg --usepkg"
+    ((  nostage3 & ~buildpkg &  usepkg )) && echo "--usepkg"
+    ((  nostage3 &  buildpkg &  usepkg )) && echo "--buildpkg --usepkg"
+    (( ~nostage3 &  buildpkg &  usepkg )) && echo "--buildpkg --usepkg"
+    (( ~nostage3 &  buildpkg & ~usepkg )) && echo "--buildpkg"
+    (( ~nostage3 & ~buildpkg &  usepkg )) && echo "--usepkg"
+    (( ~nostage3 & ~buildpkg & ~usepkg )) && echo
+}
+
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
+
+    local emerge_opts="$(__install_opts)"
 
     if has nostage3 ${EBOOTSTRAP_FEATURES}; then
 
         # install the system
         einfo "emerging system packages"
+        debug-print "install_options=${emerge_opts}"
         # amd64 link from /lib->lib64 is created by baselayout
         # make sure this is done before merging other packages
         # (its probably bug is packages which install directly to /lib ?)
-        ebootstrap-emerge -1 baselayout || ewarn "Failed merging baselayout"
-        ebootstrap-emerge -u1 @system || ewarn "Failed merging @system"
+        ebootstrap-emerge -1 ${emerge_opts} baselayout || ewarn "Failed merging baselayout"
+        ebootstrap-emerge -u1 ${emerge_opts} @system || ewarn "Failed merging @system"
         #XXX Reinstall openssh through the chroot to fix useradd problem
-        ebootstrap-chroot-emerge -1 net-misc/openssh || ewarn "Failed merging openssh"
+        ebootstrap-chroot-emerge -1 ${emerge_opts} net-misc/openssh ||
+            ewarn "Failed merging openssh"
     fi
 
     # ensure locales are updated
     ebootstrap-locale-gen --rebuild
 
-    ebootstrap-chroot-emerge -uDN1 @world || die "Failed merging @world"
+    ebootstrap-chroot-emerge -uDN1 ${emerge_opts} @world || die "Failed merging @world"
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
@@ -464,7 +483,8 @@ ebootstrap-install() {
     # packages
     if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
         einfo "Instaling packages: ${E_PACKAGES[@]}"
-        ebootstrap-chroot-emerge -u ${E_PACKAGES[@]} || ewarn "Failed merging packages"
+        ebootstrap-chroot-emerge -u ${emerge_opts} ${E_PACKAGES[@]} ||
+            ewarn "Failed merging packages"
     fi
 
     # default services
