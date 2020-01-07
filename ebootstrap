@@ -46,8 +46,14 @@ Options:
           Enables debug messages
 
   --features
-          A comma-separated set of features to enable (set the $EBOOTSTRAP_FEATURES
+          A comma-separated set of features to enable (set the EBOOTSTRAP_FEATURES
           environment variable).
+
+  --buildpkg [ y | n], -b
+          Build packages during installation. Sets emerge --buildpkg option.
+
+  --usepkg [ y | n], -k
+          Use packages during installation. Sets emerge --usepkg option.
 
   --nostage3
           Do an install from a binary package repository without unpacking
@@ -66,9 +72,18 @@ EOF
 
 load-global-config
 
+unset_feature() {
+    feature="$1"
+    for i in "${!EBOOTSTRAP_FEATURES[@]}"; do
+        if [[ ${EBOOTSTRAP_FEATURES[i]} = $feature ]]; then
+            unset 'EBOOTSTRAP_FEATURES[i]'
+        fi
+    done
+}
+
 # command line parsing
-SHORT_OPTS="dh:"
-LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,mountpoints,arch:,debug,features:,force,nostage3,bare,hostname:,help"
+SHORT_OPTS="dbkh:"
+LONG_OPTS="info,fetch,unpack,install,config,clean,prepare,mountpoints,arch:,debug,features:,force,nostage3,buildpkg::,usepkg::,bare,hostname:,help"
 
 # from http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash/29754866#29754866
 getopt --test; [[ $? == 4 ]] || { echo "ERROR: Invalid version of getopt"; exit 2; }
@@ -99,6 +114,22 @@ while true; do
             ;;
         --force)
             EBOOTSTRAP_FEATURES+=( force )
+            ;;
+        -b|--buildpkg)
+            case ${2:-y} in
+                y) EBOOTSTRAP_FEATURES+=( buildpkg ) ;;
+                n) unset_feature buildpkg ;;
+                *) die "Invalid value for $1"
+            esac
+            shift
+            ;;
+        -k|--usepkg)
+            case ${2:-y} in
+                y) EBOOTSTRAP_FEATURES+=( usepkg ) ;;
+                n) unset_feature usepkg ;;
+                *) die "Invalid value for $1"
+            esac
+            shift
             ;;
         --nostage3|--bare)
             EBOOTSTRAP_FEATURES+=( nostage3 )
