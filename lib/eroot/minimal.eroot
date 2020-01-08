@@ -1,0 +1,41 @@
+# Copyright (c) 2020 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=eroot-0
+
+inherit ebootstrap
+
+DESCRIPTION="A minimal Gentoo bootable system"
+HOMEPAGE="http://github.com/brulzki/ebootstrap"
+SRC_URI="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/latest-stage3-${STAGE3_ARCH}.txt"
+SLOT=0
+
+#E_PROFILE="gentoo:default/linux/amd64/17.1/"
+E_MAKE_CONF="
+	PKGDIR=/var/cache/packages/minimal-amd64
+	#EMERGE_DEFAULT_OPTS=--usepkgonly
+"
+E_PACKAGE_USE="
+	# disable bindist for ssl and wpa
+	dev-libs/openssl -bindist
+	net-misc/openssh -bindist
+	net-wireless/wpa_supplicant -bindist -qt5
+	app-admin/sudo -sendmail
+	sys-apps/debianutils -installkernel
+"
+E_PACKAGE_ACCEPT_KEYWORDS="
+	sys-kernel/vanilla-kernel-bin
+	sys-kernel/dracut
+	sys-kernel/installkernel-gentoo
+	sys-apps/debianutils
+"
+E_PACKAGE_LICENSE="
+	sys-kernel/linux-firmware linux-fw-redistributable no-source-code
+"
+E_PACKAGES="
+	sys-kernel/vanilla-kernel-bin
+	sys-kernel/linux-firmware
+	app-admin/sudo
+	net-wireless/wpa_supplicant
+	net-misc/dhcpcd
+"
