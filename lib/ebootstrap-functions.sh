@@ -477,6 +477,20 @@ ebootstrap-install() {
 
     ebootstrap-chroot-emerge -uDN1 ${emerge_opts} @world || die "Failed merging @world"
 
+    # create packages for the stage tarball
+    if ! has nostage3 ${EBOOTSTRAP_FEATURES} && has buildpkg ${EBOOTSTRAP_FEATURES}; then
+        einfo "Building package for the stage tarball"
+        local pkgdir="${EROOT%/}$(PORTAGE_CONFIGROOT="${EROOT%/}" portageq pkgdir 2> /dev/null)"
+        local x
+        # it seems to be a quirk of quickpkg that it reads files out
+        # of ROOT but creates packages inside (host relative) PKGDIR;
+        # similar to portageq, it is reading PKGDIR from the make.conf
+        # inside ROOT but interpreting it relative to the host
+        qlist --root=${EROOT} -Iv | while read x; do
+            [[ -f ${pkgdir}/${x}.tbz2 ]] || echo "=${x}";
+        done | PKGDIR="${pkgdir}" xargs quickpkg --umask 0022 --include-config=y
+    fi
+
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
 
