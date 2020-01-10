@@ -475,9 +475,15 @@ ebootstrap-install() {
         # (its probably bug is packages which install directly to /lib ?)
         ebootstrap-emerge -1 ${emerge_opts} baselayout || die "Failed merging baselayout"
         ebootstrap-emerge -u1 ${emerge_opts} @system || ewarn "Failed merging @system"
-        #XXX Reinstall openssh through the chroot to fix useradd problem
-        ebootstrap-chroot-emerge -1 ${emerge_opts} net-misc/openssh ||
-            ewarn "Failed merging openssh"
+
+        # Reinstall packages which inherit user.eclass through chroot;
+        # fixes issues with adding users and groups in EROOT (users
+        # are added to the host system instead)
+        local pkglist=( $(cd ${EROOT}/var/db/pkg; grep -Pl "^(.* )?user( .*)$" */*/INHERITED) )
+        if [[ ${#pkglist[@]} > 0 ]]; then
+            ebootstrap-chroot-emerge -1 ${emerge_opts} $(printf "=%s\n" ${pkglist[@]%/*}) ||
+                ewarn "Failed merging user.eclass packages"
+        fi
     fi
 
     # ensure locales are updated
