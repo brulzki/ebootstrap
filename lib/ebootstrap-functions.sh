@@ -465,7 +465,7 @@ ebootstrap-install() {
         # amd64 link from /lib->lib64 is created by baselayout
         # make sure this is done before merging other packages
         # (its probably bug is packages which install directly to /lib ?)
-        ebootstrap-emerge -1 ${emerge_opts} baselayout || ewarn "Failed merging baselayout"
+        ebootstrap-emerge -1 ${emerge_opts} baselayout || die "Failed merging baselayout"
         ebootstrap-emerge -u1 ${emerge_opts} @system || ewarn "Failed merging @system"
         #XXX Reinstall openssh through the chroot to fix useradd problem
         ebootstrap-chroot-emerge -1 ${emerge_opts} net-misc/openssh ||
