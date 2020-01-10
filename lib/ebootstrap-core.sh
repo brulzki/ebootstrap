@@ -40,7 +40,9 @@ eerror() {
 
 __is_fn die || \
 die() {
+    local code=$?
     [ ${#} -eq 0 ] || eerror "${*}"
+    eerror "last exit return code was $code"
     exit 2
 }
 
