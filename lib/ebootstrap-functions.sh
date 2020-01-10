@@ -377,6 +377,15 @@ ebootstrap-prepare() {
     # ensure that the portage config is updated so it can be used for mounts
     ebootstrap-configure-portage
 
+    if [[ -z "${E_PROFILE}" ]] && ! has nostage3 ${EBOOTSTRAP_FEATURES}; then
+        # Warn if the default profile does not match the stage tarball
+        local profile="$(get-profile ${EROOT})"
+        if [[ "$(get_default_profile)" != "${profile}" ]]; then
+            ewarn "Default profile mismatch: stage3 profile is ${profile}"
+            ewarn "E_PROFILE should be set in the eroot config"
+        fi
+    fi
+
     cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
 
     if [[ $UID != 0 ]]; then
