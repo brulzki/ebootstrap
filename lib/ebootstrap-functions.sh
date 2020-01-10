@@ -713,9 +713,10 @@ ebootstrap-configure-repos() {
 }
 
 ebootstrap-configure-profile() {
-    if [[ -n "${E_PROFILE}" ]]; then
-        einfo "Setting make.profile to ${E_PROFILE}"
-        set_profile "${E_PROFILE}"
+    if [[ -n "${E_PROFILE}" ]] || has nostage3 ${EBOOTSTRAP_FEATURES}; then
+        local profile="${E_PROFILE:-$(get_default_profile)}"
+        einfo "Setting make.profile to ${profile}"
+        set_profile "${profile}"
     fi
 }
 

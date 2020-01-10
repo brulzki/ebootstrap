@@ -82,6 +82,10 @@ use() {
 
 # helper functions
 
+get_default_profile() {
+    echo "gentoo:default/linux/${ARCH}/17.1"
+}
+
 load-global-config() {
     # the global config is loaded from
     #  - /etc/ebootstrap.conf
@@ -90,7 +94,7 @@ load-global-config() {
         source /etc/ebootstrap.conf
     fi
 
-    # this should always be set... use default values otherwise
+    # these should always be set... use default values otherwise
     : ${EBOOTSTRAP_CACHE:=/var/cache/ebootstrap}
     : ${REPOS_BASE:=/var/db/repos}
 }
