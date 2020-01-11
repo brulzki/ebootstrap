@@ -14,6 +14,6 @@ test: $(TESTS)
 
 $(TESTS):
 	@echo ">>> $@"
-	@$(RUNTEST) $@
+	-@$(RUNTEST) $@
 
 .PHONY: all test $(TESTS)
