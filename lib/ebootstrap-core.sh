@@ -96,6 +96,7 @@ load-global-config() {
 
     # these should always be set... use default values otherwise
     : ${EBOOTSTRAP_CACHE:=/var/cache/ebootstrap}
+    : ${EBOOTSTRAP_MAKEOPTS:=-j$(( $(nproc) + 1 ))}
     : ${REPOS_BASE:=/var/db/repos}
 }
 

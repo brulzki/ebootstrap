@@ -436,7 +436,12 @@ ebootstrap-chroot() {
 }
 
 ebootstrap-chroot-emerge() {
-    ebootstrap-chroot /usr/bin/env FEATURES="-news" \
+    local makeopts
+    if ! grep ^MAKEOPTS= "${EROOT}/etc/portage/make.conf"; then
+        # MAKEOPTS is not set in EROOT
+        makeopts="MAKEOPTS=${EBOOTSTRAP_MAKEOPTS}"
+    fi
+    ebootstrap-chroot /usr/bin/env FEATURES="-news" ${makeopts} \
         /usr/bin/emerge ${EMERGE_OPTS} --root=/ "$@"
 }
 
