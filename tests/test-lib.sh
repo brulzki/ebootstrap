@@ -41,6 +41,7 @@ tbegin () {
 
 tend () {
     __is_fn teardown && teardown
+    return 0
 }
 
 is_debug() {
