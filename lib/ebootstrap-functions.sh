@@ -946,6 +946,22 @@ ebootstrap-locale-gen() {
     fi
 }
 
+# passwd_hash
+#
+# Returns a hashed password, which can be added to new users in
+# /etc/passwd
+passwd_hash() {
+    local hash
+
+    # Use sha-512 if mkpasswd is available (from whois package)
+    if command -v mkpasswd > /dev/null; then
+        hash=$(mkpasswd -m sha-512 --stdin <<< "$1")
+    else
+        hash=$(openssl passwd -1 -stdin <<< "$1")
+    fi
+    echo "${hash}"
+}
+
 ebootstrap-configure-system() {
     # /etc/locale.gen
     ebootstrap-locale-gen
