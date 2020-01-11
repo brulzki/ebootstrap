@@ -18,6 +18,8 @@
 # E_DISTDIR   .
 # E_PKGDIR    .
 #
+# E_BINHOST   - sets PORTAGE_BINHOST and enables FEATURES=getbinpkg
+#
 # E_MAKE_CONF_CUSTOM
 #             - customise the default make.conf file content
 
@@ -449,5 +451,24 @@ E_MAKE_CONF="
 ebootstrap-configure-make-conf
 assert "check all values added on a single line (2)" '
     grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+# PORTAGE_BINHOST
+#
+
+#
+tbegin "Test setting PORTAGE_BINHOST from E_BINHOST"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first
+"
+E_BINHOST="http://binhost/"
+ebootstrap-configure-make-conf
+assert "check PORTAGE_BINHOST is set" '
+    grep -q "^PORTAGE_BINHOST=\"http://binhost/\"$" ${EROOT}/etc/portage/make.conf
+'
+assert "check FEATURES=getbinpkg is enabled" '
+    grep -q "^FEATURES=\"first getbinpkg\"$" ${EROOT}/etc/portage/make.conf
 '
 tend

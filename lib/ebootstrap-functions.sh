@@ -755,6 +755,8 @@ ebootstrap-configure-profile() {
 # E_PKGDIR    .
 # E_DISTDIR   .
 #
+# E_BINHOST   - sets PORTAGE_BINHOST and enables FEATURES=getbinpkg
+#
 # E_MAKE_CONF_CUSTOM
 #             - customise the default make.conf file content
 ebootstrap-configure-make-conf() {
@@ -807,6 +809,11 @@ ebootstrap-configure-make-conf() {
         local n="E_${v}"
         [[ -v E_${v} ]] && overrides+=( "${v}=${!n}" )
     done
+
+    # set the PORTAGE_BINHOST from E_BINHOST
+    if [[ -n ${E_BINHOST} ]]; then
+        overrides+=( "FEATURES+=getbinpkg" "PORTAGE_BINHOST=${E_BINHOST}" )
+    fi
 
     # generate sed edit rules to the default config
     local -A subst
