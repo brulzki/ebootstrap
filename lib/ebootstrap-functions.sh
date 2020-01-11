@@ -760,6 +760,19 @@ ebootstrap-configure-make-conf() {
     local i=0
     while read line; do
         case "${line}" in
+            *+=*)
+                if has "${line%%+=*}" "${vars[@]}"; then
+                    v=${line#*+=\"}
+                    v=${v%\"}
+                    # substitute to append the value if the value is not already set
+                    subst[${#subst[@]}]="/^${line%%+=*}=.*[ \"]${v}[ \"]/ ! s@^\\(${line%%+=*}=.*\\)\"\$@\\1 ${line#*+=\"}@"
+                elif [[ -n "${append[${line%%+=*}]}" ]]; then
+                    # modify an existing append rule
+                    append[${line%%+=*}]="${append[${line%%+=*}]%\"} ${line#*+=\"}"
+                else
+                    append[${line%%+=*}]="${line%%+=*}=${line#*+=}"
+                fi
+                ;;
             *=*)
                 if has "${line%%=*}" "${vars[@]}"; then
                     subst[${line%%=*}]="s@^${line%%=*}=.*\$@${line%%=*}=${line#*=}@"

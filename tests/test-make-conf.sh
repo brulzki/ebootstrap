@@ -349,3 +349,105 @@ assert "check E_DISTDIR precedence" '
     grep -q "^EMERGE_DEFAULT_OPTS=\"--usepkgonly --ignore-built-slot-operator-deps=y\"$" ${EROOT}/etc/portage/make.conf
 '
 tend
+
+#
+# Tests for lines which append to a value (eg USE or FEATURES)
+#
+
+#
+tbegin "Test appending values - append values to a line"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check the value is appended to an existing line" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding a line"
+E_MAKE_CONF_CUSTOM="
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check the value is added as a new line" '
+    grep -q "^FEATURES=\"second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - value exists already"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first second
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check value is not added if it exists" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - value exists already (2)"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first second
+"
+E_MAKE_CONF="
+    FEATURES+=first
+"
+ebootstrap-configure-make-conf
+assert "check first value is not added if it exists" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - similar value exists "
+E_MAKE_CONF_CUSTOM="
+    FEATURES=firstline
+"
+E_MAKE_CONF="
+    FEATURES+=first
+"
+ebootstrap-configure-make-conf
+assert "check first value is added if it exists" '
+    grep -q "^FEATURES=\"firstline first\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding multiple values (1)"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first
+"
+E_MAKE_CONF="
+    FEATURES+=second
+    FEATURES+=third
+"
+ebootstrap-configure-make-conf
+assert "check all values added on a single line" '
+    grep -q "^FEATURES=\"first second third\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding multiple values (2)"
+E_MAKE_CONF_CUSTOM="
+"
+E_MAKE_CONF="
+    FEATURES+=first
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check all values added on a single line (2)" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
