@@ -353,8 +353,7 @@ get-profile() {
                 dir="${repo_paths[i]}/profiles"
                 if [[ ${link} == "${dir}"/* ]]; then
                     link=${link##"${dir}/"}
-                    [[ ${repos[i]} != "${DEFAULT_REPO}" ]] \
-                        && link=${repos[i]}:${link}
+                    link=${repos[i]}:${link}
                     p[${x}]=${link}
                     break
                 fi
