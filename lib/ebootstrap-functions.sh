@@ -353,8 +353,7 @@ get-profile() {
                 dir="${repo_paths[i]}/profiles"
                 if [[ ${link} == "${dir}"/* ]]; then
                     link=${link##"${dir}/"}
-                    [[ ${repos[i]} != "${DEFAULT_REPO}" ]] \
-                        && link=${repos[i]}:${link}
+                    link=${repos[i]}:${link}
                     p[${x}]=${link}
                     break
                 fi
@@ -377,6 +376,15 @@ ebootstrap-prepare() {
 
     # ensure that the portage config is updated so it can be used for mounts
     ebootstrap-configure-portage
+
+    if [[ -z "${E_PROFILE}" ]] && ! has nostage3 ${EBOOTSTRAP_FEATURES}; then
+        # Warn if the default profile does not match the stage tarball
+        local profile="$(get-profile ${EROOT})"
+        if [[ "$(get_default_profile)" != "${profile}" ]]; then
+            ewarn "Default profile mismatch: stage3 profile is ${profile}"
+            ewarn "E_PROFILE should be set in the eroot config"
+        fi
+    fi
 
     cp /etc/resolv.conf "${EROOT}/etc/resolv.conf"
 
@@ -428,7 +436,12 @@ ebootstrap-chroot() {
 }
 
 ebootstrap-chroot-emerge() {
-    ebootstrap-chroot /usr/bin/env FEATURES="-news" \
+    local makeopts
+    if ! grep ^MAKEOPTS= "${EROOT}/etc/portage/make.conf"; then
+        # MAKEOPTS is not set in EROOT
+        makeopts="MAKEOPTS=${EBOOTSTRAP_MAKEOPTS}"
+    fi
+    ebootstrap-chroot /usr/bin/env FEATURES="-news" ${makeopts} \
         /usr/bin/emerge ${EMERGE_OPTS} --root=/ "$@"
 }
 
@@ -437,26 +450,65 @@ ebootstrap-rc-update() {
     ebootstrap-chroot rc-update "$@"
 }
 
+__install_opts() {
+    local nostage3=$(has nostage3 ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+    local buildpkg=$(has buildpkg ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+    local usepkg=$(has usepkg ${EBOOTSTRAP_FEATURES} && echo 1 || echo 0)
+
+    ((  nostage3 & ~buildpkg & ~usepkg )) && echo "--usepkgonly"
+    ((  nostage3 &  buildpkg & ~usepkg )) && echo "--buildpkg --usepkg"
+    ((  nostage3 & ~buildpkg &  usepkg )) && echo "--usepkg"
+    ((  nostage3 &  buildpkg &  usepkg )) && echo "--buildpkg --usepkg"
+    (( ~nostage3 &  buildpkg &  usepkg )) && echo "--buildpkg --usepkg"
+    (( ~nostage3 &  buildpkg & ~usepkg )) && echo "--buildpkg"
+    (( ~nostage3 & ~buildpkg &  usepkg )) && echo "--usepkg"
+    (( ~nostage3 & ~buildpkg & ~usepkg )) && echo
+}
+
 ebootstrap-install() {
     debug-print-function ${FUNCNAME} "${@}"
+
+    local emerge_opts="$(__install_opts)"
 
     if has nostage3 ${EBOOTSTRAP_FEATURES}; then
 
         # install the system
         einfo "emerging system packages"
+        debug-print "install_options=${emerge_opts}"
         # amd64 link from /lib->lib64 is created by baselayout
         # make sure this is done before merging other packages
         # (its probably bug is packages which install directly to /lib ?)
-        ebootstrap-emerge -1 baselayout || ewarn "Failed merging baselayout"
-        ebootstrap-emerge -u1 @system || ewarn "Failed merging @system"
-        #XXX Reinstall openssh through the chroot to fix useradd problem
-        ebootstrap-chroot-emerge -1 net-misc/openssh || ewarn "Failed merging openssh"
+        ebootstrap-emerge -1 ${emerge_opts} baselayout || die "Failed merging baselayout"
+        ebootstrap-emerge -u1 ${emerge_opts} @system || ewarn "Failed merging @system"
+
+        # Reinstall packages which inherit user.eclass through chroot;
+        # fixes issues with adding users and groups in EROOT (users
+        # are added to the host system instead)
+        local pkglist=( $(cd ${EROOT}/var/db/pkg; grep -Pl "^(.* )?user( .*)$" */*/INHERITED) )
+        if [[ ${#pkglist[@]} > 0 ]]; then
+            ebootstrap-chroot-emerge -1 ${emerge_opts} $(printf "=%s\n" ${pkglist[@]%/*}) ||
+                ewarn "Failed merging user.eclass packages"
+        fi
     fi
 
     # ensure locales are updated
     ebootstrap-locale-gen --rebuild
 
-    ebootstrap-chroot-emerge -uDN1 @world || die "Failed merging @world"
+    ebootstrap-chroot-emerge -uDN1 ${emerge_opts} @world || die "Failed merging @world"
+
+    # create packages for the stage tarball
+    if ! has nostage3 ${EBOOTSTRAP_FEATURES} && has buildpkg ${EBOOTSTRAP_FEATURES}; then
+        einfo "Building package for the stage tarball"
+        local pkgdir="${EROOT%/}$(PORTAGE_CONFIGROOT="${EROOT%/}" portageq pkgdir 2> /dev/null)"
+        local x
+        # it seems to be a quirk of quickpkg that it reads files out
+        # of ROOT but creates packages inside (host relative) PKGDIR;
+        # similar to portageq, it is reading PKGDIR from the make.conf
+        # inside ROOT but interpreting it relative to the host
+        qlist --root=${EROOT} -Iv | while read x; do
+            [[ -f ${pkgdir}/${x}.tbz2 ]] || echo "=${x}";
+        done | PKGDIR="${pkgdir}" xargs quickpkg --umask 0022 --include-config=y
+    fi
 
     # just automerge all the config changes
     ROOT=${EROOT} etc-update --automode -5
@@ -464,7 +516,8 @@ ebootstrap-install() {
     # packages
     if [[ ${#E_PACKAGES[@]} -gt 0 ]]; then
         einfo "Instaling packages: ${E_PACKAGES[@]}"
-        ebootstrap-chroot-emerge -u ${E_PACKAGES[@]} || ewarn "Failed merging packages"
+        ebootstrap-chroot-emerge -u ${emerge_opts} ${E_PACKAGES[@]} ||
+            ewarn "Failed merging packages"
     fi
 
     # default services
@@ -679,9 +732,10 @@ ebootstrap-configure-repos() {
 }
 
 ebootstrap-configure-profile() {
-    if [[ -n "${E_PROFILE}" ]]; then
-        einfo "Setting make.profile to ${E_PROFILE}"
-        set_profile "${E_PROFILE}"
+    if [[ -n "${E_PROFILE}" ]] || has nostage3 ${EBOOTSTRAP_FEATURES}; then
+        local profile="${E_PROFILE:-$(get_default_profile)}"
+        einfo "Setting make.profile to ${profile}"
+        set_profile "${profile}"
     fi
 }
 
@@ -700,6 +754,8 @@ ebootstrap-configure-profile() {
 # E_PORTDIR   - override the config values
 # E_PKGDIR    .
 # E_DISTDIR   .
+#
+# E_BINHOST   - sets PORTAGE_BINHOST and enables FEATURES=getbinpkg
 #
 # E_MAKE_CONF_CUSTOM
 #             - customise the default make.conf file content
@@ -753,6 +809,11 @@ ebootstrap-configure-make-conf() {
         local n="E_${v}"
         [[ -v E_${v} ]] && overrides+=( "${v}=${!n}" )
     done
+
+    # set the PORTAGE_BINHOST from E_BINHOST
+    if [[ -n ${E_BINHOST} ]]; then
+        overrides+=( "FEATURES+=getbinpkg" "PORTAGE_BINHOST=${E_BINHOST}" )
+    fi
 
     # generate sed edit rules to the default config
     local -A subst
@@ -839,14 +900,14 @@ ebootstrap-configure-package-files() {
 
 ebootstrap-configure-portage() {
     # configure stuff in /etc/portage
+    # - make.conf
     # - repos.conf
     # - make.profile
-    # - make.conf
     # - package.*
 
+    ebootstrap-configure-make-conf
     ebootstrap-configure-repos
     ebootstrap-configure-profile
-    ebootstrap-configure-make-conf
     ebootstrap-configure-package-files
 }
 
@@ -883,6 +944,22 @@ ebootstrap-locale-gen() {
         einfo "Regenerating system locales"
         ebootstrap-chroot /usr/sbin/locale-gen || ewarn "Failed locale-gen"
     fi
+}
+
+# passwd_hash
+#
+# Returns a hashed password, which can be added to new users in
+# /etc/passwd
+passwd_hash() {
+    local hash
+
+    # Use sha-512 if mkpasswd is available (from whois package)
+    if command -v mkpasswd > /dev/null; then
+        hash=$(mkpasswd -m sha-512 --stdin <<< "$1")
+    else
+        hash=$(openssl passwd -1 -stdin <<< "$1")
+    fi
+    echo "${hash}"
 }
 
 ebootstrap-configure-system() {

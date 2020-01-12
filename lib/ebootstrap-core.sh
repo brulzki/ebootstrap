@@ -40,7 +40,9 @@ eerror() {
 
 __is_fn die || \
 die() {
+    local code=$?
     [ ${#} -eq 0 ] || eerror "${*}"
+    eerror "last exit return code was $code"
     exit 2
 }
 
@@ -80,6 +82,10 @@ use() {
 
 # helper functions
 
+get_default_profile() {
+    echo "gentoo:default/linux/${ARCH}/17.1"
+}
+
 load-global-config() {
     # the global config is loaded from
     #  - /etc/ebootstrap.conf
@@ -88,8 +94,9 @@ load-global-config() {
         source /etc/ebootstrap.conf
     fi
 
-    # this should always be set... use default values otherwise
+    # these should always be set... use default values otherwise
     : ${EBOOTSTRAP_CACHE:=/var/cache/ebootstrap}
+    : ${EBOOTSTRAP_MAKEOPTS:=-j$(( $(nproc) + 1 ))}
     : ${REPOS_BASE:=/var/db/repos}
 }
 

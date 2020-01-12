@@ -1,0 +1,88 @@
+# Copyright (c) 2020 Bruce Schultz <brulzki@gmail.com>
+# Distributed under the terms of the GNU General Public License v2
+
+EAPI=eroot-0
+
+inherit ebootstrap
+
+DESCRIPTION="A minimal Gentoo bootable system"
+HOMEPAGE="http://github.com/brulzki/ebootstrap"
+SRC_URI="http://distfiles.gentoo.org/releases/${ARCH}/autobuilds/latest-stage3-${STAGE3_ARCH}.txt"
+SLOT=0
+
+#E_PROFILE="gentoo:default/linux/amd64/17.1/"
+E_MAKE_CONF="
+	PKGDIR=/var/cache/packages/minimal-amd64
+	#EMERGE_DEFAULT_OPTS=--usepkgonly
+"
+E_PACKAGE_USE="
+	# disable bindist for ssl and wpa
+	dev-libs/openssl -bindist
+	net-misc/openssh -bindist
+	net-wireless/wpa_supplicant -bindist -qt5
+	app-admin/sudo -sendmail
+	sys-apps/debianutils -installkernel
+"
+E_PACKAGE_ACCEPT_KEYWORDS="
+	sys-kernel/vanilla-kernel-bin
+	sys-kernel/dracut
+	sys-kernel/installkernel-gentoo
+	sys-apps/debianutils
+"
+E_PACKAGE_LICENSE="
+	sys-kernel/linux-firmware linux-fw-redistributable no-source-code
+"
+E_PACKAGES="
+	sys-kernel/vanilla-kernel-bin
+	sys-kernel/linux-firmware
+	app-admin/sudo
+	net-wireless/wpa_supplicant
+	net-misc/dhcpcd
+"
+
+pkg_config() {
+	ebootstrap_pkg_config
+
+	useradd -R ${EROOT} gentoo -G wheel -p $(passwd_hash penguin)
+
+	cat > "${EROOT}/etc/sudoers.d/ebootstrap" <<-EOF
+		Defaults passprompt="[sudo] Password: "
+		%wheel ALL=(ALL) ALL
+		EOF
+	chmod 440 "${EROOT}/etc/sudoers.d/ebootstrap"
+
+	if [[ -d "${EROOT}/etc/wpa_supplicant" &&
+			  ! -f "${EROOT}/etc/wpa_supplicant/wpa_supplicant.conf" ]]; then
+		cat > "${EROOT}/etc/wpa_supplicant/wpa_supplicant.conf" <<-EOF
+			ctrl_interface=DIR=/run/wpa_supplicant GROUP=wheel
+			update_config=1
+			EOF
+		chmod 440 "${EROOT}/etc/wpa_supplicant/wpa_supplicant.conf"
+	fi
+
+	# a simple script to set up wifi
+	cat > "${EROOT}/usr/local/bin/wifi" <<-EOF
+		#!/bin/bash
+		n="
+		"
+		if ! rc-service wpa_supplicant status > /dev/null; then
+			sudo rc-service wpa_supplicant start || exit 1
+		fi
+		case \${1:-scan} in
+			scan)
+				wpa_cli scan
+				sleep 2
+				wpa_cli scan_results
+				;;
+			*)
+				id=\$(wpa_cli add_network)
+				id=\${id##*\${n}}
+				wpa_cli set_network \$id ssid \"\$1\"
+				wpa_cli set_network \$id psk \"\$2\"
+				wpa_cli enable_network \$id
+				wpa_cli select_network \$id
+				;;
+		esac
+		EOF
+	chmod +x "${EROOT}/usr/local/bin/wifi"
+}
