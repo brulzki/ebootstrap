@@ -31,7 +31,8 @@ if [[ ! ${_EBOOTSTRAP} ]]; then
 
 # this results in very ungraceful errors, but prevents any major stuff-ups
 if [[ "${EBUILD_PHASE}" != "info" ]]; then
-	[[ ${EROOT} == "/" ]] && die "refusing to ebootstrap /"
+	[[ -z "${EROOT}" || "${EROOT}" == "/" ]] &&
+		die "refusing to ebootstrap /"
 fi
 
 S=${EROOT}
@@ -63,7 +64,8 @@ ebootstrap_src_unpack() {
 	debug-print-function ${FUNCNAME} "${@}"
 
 	# this is also checked in ebootstrap-unpack, but we want to be sure
-	[[ ${EROOT} == "/" ]] && die "ERROR: refusing to install into /"
+	[[ -z "${EROOT}" || "${EROOT}" == "/" ]] &&
+		die "ERROR: refusing to install into /"
 
 	ebootstrap-unpack
 }
