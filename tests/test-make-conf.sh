@@ -12,11 +12,14 @@
 #
 # The config variables processed by this are:
 #
-# E_MAKE_CONF - sets the default config file content/settings
+# E_MAKE_CONF - sets config values in make.conf
 #
 # E_PORTDIR   - override the config values
 # E_DISTDIR   .
 # E_PKGDIR    .
+#
+# E_MAKE_CONF_CUSTOM
+#             - customise the default make.conf file content
 
 # TODO: confirm if we need to still create the directories from here
 # (old function did this if E_*DIR variables exist)
@@ -34,7 +37,7 @@ teardown() {
     is_debug && { cat ${EROOT}/etc/portage/make.conf; printf "========\n"; }
     rm -rf ${EROOT}
     # clear env; these should be set within each test
-    unset E_MAKE_CONF E_MAKE_OVERRIDES E_PORTDIR E_PKGDIR E_DISTDIR
+    unset E_MAKE_CONF E_PORTDIR E_PKGDIR E_DISTDIR E_MAKE_CONF_CUSTOM
 }
 
 #
@@ -68,9 +71,9 @@ assert "DISTDIR exists" '
 tend
 
 #
-tbegin "Test with config defined"
+tbegin "Test with custom config defined"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     HELLO=world
 "
 ebootstrap-configure-make-conf
@@ -79,7 +82,7 @@ assert "config is defined (with quotes added)" '
     grep -q "^HELLO=\"world\"$" ${EROOT}/etc/portage/make.conf
 '
 # HELLO should be the only variable defined in make.conf
-assert "the config from E_MAKE_CONF is the default" '
+assert "the config from E_MAKE_CONF_CUSTOM is the default" '
     [[ $(grep "=" ${EROOT}/etc/portage/make.conf | wc -l) == 1 ]]
 '
 tend
@@ -87,7 +90,7 @@ tend
 #
 tbegin "Test existing content is appended to"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     HELLO=world
 "
 mkdir -p ${EROOT}/etc/portage
@@ -105,7 +108,7 @@ tend
 #
 tbegin "Test existing content is updated"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     HELLO=world
 "
 mkdir -p ${EROOT}/etc/portage
@@ -124,7 +127,7 @@ tend
 #
 tbegin "Test passing comments through"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     # comment
     HELLO=world
     # goodbye
@@ -147,7 +150,7 @@ tend
 #
 tbegin "Test for idempotence"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     HELLO=world
 "
 ebootstrap-configure-make-conf
@@ -192,7 +195,7 @@ tend
 tbegin "Test with a realistic config"
 
 # adapted from a sample eroot config
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
        USE=bindist
 
        PKGDIR=/var/cache/binpkg
@@ -221,9 +224,9 @@ assert "correct number of lines in make.conf" '
 tend
 
 #
-tbegin "Test E_MAKE_OVERRIDES are appended to default config"
+tbegin "Test E_MAKE_CONF values are appended to default config"
 
-E_MAKE_OVERRIDES="
+E_MAKE_CONF="
     HELLO=world
 "
 ebootstrap-configure-make-conf
@@ -240,9 +243,9 @@ assert "new config is present" '
 tend
 
 #
-tbegin "Test existing content is updated by E_MAKE_OVERRIDES"
+tbegin "Test existing content is updated by E_MAKE_CONF"
 
-E_MAKE_OVERRIDES="
+E_MAKE_CONF="
     HELLO=world
 "
 mkdir -p ${EROOT}/etc/portage
@@ -259,9 +262,9 @@ assert "new config is present" '
 tend
 
 #
-tbegin "Test E_MAKE_OVERRIDES updates defaults"
+tbegin "Test E_MAKE_CONF updates defaults"
 
-E_MAKE_OVERRIDES="
+E_MAKE_CONF="
     PORTDIR=/usr/portage
 "
 ebootstrap-configure-make-conf
@@ -272,9 +275,9 @@ assert "check PORTDIR is updated" '
 tend
 
 #
-tbegin "Test E_*DIR precedence over E_MAKE_OVERRIDES"
+tbegin "Test E_*DIR precedence over E_MAKE_CONF"
 
-E_MAKE_OVERRIDES="
+E_MAKE_CONF="
     PORTDIR=/usr/portage
     PKGDIR=/usr/portage/packages
     DISTDIR=/usr/portage/distfiles
@@ -299,12 +302,12 @@ assert "dirs are only defined once each" '
 tend
 
 #
-tbegin "Test E_*DIR precedence over E_MAKE_OVERRIDES - empty defaults"
+tbegin "Test E_*DIR precedence over E_MAKE_CONF - empty defaults"
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     PORTDIR=blah
 "
-E_MAKE_OVERRIDES="
+E_MAKE_CONF="
     PORTDIR=/usr/portage
     PKGDIR=/usr/portage/packages
     DISTDIR=/usr/portage/distfiles
@@ -331,7 +334,7 @@ tend
 #
 tbegin "Test value containing ="
 
-E_MAKE_CONF="
+E_MAKE_CONF_CUSTOM="
     EMERGE_DEFAULT_OPTS=--usepkgonly --ignore-built-slot-operator-deps=y
 "
 ebootstrap-configure-make-conf
@@ -344,5 +347,107 @@ ebootstrap-configure-make-conf
 
 assert "check E_DISTDIR precedence" '
     grep -q "^EMERGE_DEFAULT_OPTS=\"--usepkgonly --ignore-built-slot-operator-deps=y\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+# Tests for lines which append to a value (eg USE or FEATURES)
+#
+
+#
+tbegin "Test appending values - append values to a line"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check the value is appended to an existing line" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding a line"
+E_MAKE_CONF_CUSTOM="
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check the value is added as a new line" '
+    grep -q "^FEATURES=\"second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - value exists already"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first second
+"
+E_MAKE_CONF="
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check value is not added if it exists" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - value exists already (2)"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first second
+"
+E_MAKE_CONF="
+    FEATURES+=first
+"
+ebootstrap-configure-make-conf
+assert "check first value is not added if it exists" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - similar value exists "
+E_MAKE_CONF_CUSTOM="
+    FEATURES=firstline
+"
+E_MAKE_CONF="
+    FEATURES+=first
+"
+ebootstrap-configure-make-conf
+assert "check first value is added if it exists" '
+    grep -q "^FEATURES=\"firstline first\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding multiple values (1)"
+E_MAKE_CONF_CUSTOM="
+    FEATURES=first
+"
+E_MAKE_CONF="
+    FEATURES+=second
+    FEATURES+=third
+"
+ebootstrap-configure-make-conf
+assert "check all values added on a single line" '
+    grep -q "^FEATURES=\"first second third\"$" ${EROOT}/etc/portage/make.conf
+'
+tend
+
+#
+tbegin "Test appending values - adding multiple values (2)"
+E_MAKE_CONF_CUSTOM="
+"
+E_MAKE_CONF="
+    FEATURES+=first
+    FEATURES+=second
+"
+ebootstrap-configure-make-conf
+assert "check all values added on a single line (2)" '
+    grep -q "^FEATURES=\"first second\"$" ${EROOT}/etc/portage/make.conf
 '
 tend
